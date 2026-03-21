@@ -1,0 +1,673 @@
+/* Base structural styles for webapp-lib components. */
+
+/* ── Layout ── */
+
+html {
+    height: 100%;
+}
+
+body {
+    background-color: var(--background);
+    color: var(--text);
+    height: 100%;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+/* Router <main> fills the remaining viewport height */
+main {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.main {
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    width: 40vw;
+    text-align: left;
+    background-color: var(--background);
+    overflow: hidden;
+}
+
+/* Scrollable content area for detail/form pages (no DataGrid) */
+.page-content {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+}
+
+/* Action buttons — sticky bottom-right */
+.detail-actions {
+    position: sticky;
+    bottom: 0;
+    display: flex;
+    justify-content: flex-end;
+    padding: 0.5rem 0;
+    background-color: var(--background);
+}
+
+.scrollable-reverse {
+    display: flex;
+    flex-direction: column;
+}
+
+.snap-to-bottom {
+    /* placeholder class — add styles as needed */
+}
+
+/* ── Top toolbar & side menu ── */
+
+.top-toolbar {
+    margin: auto;
+    display: flex;
+    width: 40vw;
+    justify-content: flex-start;
+    align-items: center;
+    text-align: left;
+    background-color: var(--primary);
+    overflow: hidden;
+    max-height: 100px;
+    transition: max-height 0.3s ease, opacity 0.2s ease;
+}
+
+body.toolbar-hidden .top-toolbar {
+    max-height: 0;
+    opacity: 0;
+}
+
+.user-badge {
+    margin-left: auto;
+    margin-right: 0.75rem;
+    font-size: 0.9rem;
+    color: var(--accent);
+    background: white;
+    border: 1px solid var(--accent);
+    border-radius: 1rem;
+    padding: 0.15rem 0.75rem;
+    white-space: nowrap;
+}
+
+/* centres toolbar content to match .main width */
+.main-width {
+    width: 40vw;
+    margin: 0 auto;
+}
+
+/* Hamburger button */
+.hamburger-btn {
+    background: none;
+    border: none;
+    font-size: 2em;
+    color: var(--background);
+    cursor: pointer;
+    margin: 4px;
+}
+.hamburger-btn:hover {
+    background: var(--background);
+    color: var(--accent);
+}
+.hamburger-btn span {
+    display: block;
+    width: 22px;
+    height: 3px;
+    background: var(--secondary);
+    border-radius: 2px;
+}
+
+/* Overlay */
+.side-menu-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.45);
+    z-index: 1250;
+}
+.side-menu-overlay.visible {
+    display: block;
+}
+
+/* Drawer — hidden off-screen left by default */
+.side-menu {
+    position: fixed;
+    top: 0;
+    left: calc((100vw - 40vw) / 2);
+    height: 100vh;
+    width: 220px;
+    background: linear-gradient(160deg, var(--background) 0%, var(--secondary) 100%);
+    z-index: 1300;
+    display: flex;
+    flex-direction: column;
+    padding: 0.5rem 0;
+    box-shadow: 4px 0 16px rgba(0,0,0,0.4);
+    transform: translateX(calc(-100% - 4px));
+    transition: transform 220ms ease-in-out;
+    visibility: hidden;
+    opacity: 1;
+}
+.side-menu.open {
+    transform: translateX(0);
+    visibility: visible;
+}
+.side-menu a {
+    color: var(--primary);
+    text-decoration: none;
+    padding: 0.85rem 1.5rem;
+    font-size: 1rem;
+    font-weight: 500;
+    transition: background 120ms;
+}
+.side-menu a:hover,
+.side-menu a[aria-current="page"] {
+    background: var(--accent);
+    color: var(--secondary);
+    font-weight: bold;
+}
+.side-menu-username {
+    padding: 0.1rem 1.5rem;
+    font-size: 0.85rem;
+    font-weight: bold;
+    color: var(--white);
+    opacity: 0.7;
+    border-top: 1px solid var(--secondary);
+    background-color: var(--primary);
+}
+
+.side-menu-close {
+    align-self: flex-end;
+    margin: 0.5rem 0.75rem 0.25rem;
+    background: none !important;
+    border: none;
+    color: var(--primary);
+    font-size: 1.4rem;
+    cursor: pointer;
+}
+
+/* ── Title bar ── */
+
+.title-bar {
+    background-color: var(--accent);
+    color: var(--secondary);
+    padding: 10px;
+    margin-top: 2px;
+    margin-bottom: 10px;
+    box-shadow: 0 5px 3px 0 rgba(43, 35, 35, 0.6);
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.title-bar span {
+    flex: 1;
+    text-align: center;
+}
+
+.title {
+    color: var(--secondary);
+    font-weight: bold;
+}
+
+.description {
+    color: var(--primary);
+    font-size: smaller;
+}
+
+/* ── Data grid ── */
+
+.data-grid {
+    display: grid;
+    gap: 6px;
+    padding: 10px;
+    color: var(--primary);
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    box-shadow: 0 5px 10px 0 rgba(43, 35, 35, 0.6);
+}
+
+.data-grid-row {
+    padding: 4px 8px 10px;
+    border-bottom: 1px solid #ccc;
+}
+
+.grid-cell {
+    padding: 8px;
+    transition: background-color 120ms ease-in-out;
+    color: var(--primary);
+}
+
+.grid-cell:not(:last-child) {
+    border-bottom: 1px solid var(--primary);
+}
+
+.grid-cell:hover {
+    color: var(--primary);
+    background-color: var(--background);
+}
+
+.page-header {
+    position: sticky;
+    z-index: 999;
+    padding-bottom: 10px;
+}
+
+/* ── Component / row ── */
+
+.component {
+    position: relative;
+    padding: 3px;
+}
+
+.component-section {
+    margin-top: 8px;
+    border: 1px solid var(--primary);
+    padding: 5px 5px 3rem 5px;
+    border-radius: 8px;
+}
+
+/* ── Buttons ── */
+
+.button {
+    margin: 2px;
+    color: var(--primary);
+}
+
+.button:hover {
+    text-decoration: underline;
+    font-weight: bolder;
+    cursor: pointer;
+    color: var(--primary);
+    background-color: var(--secondary);
+}
+
+.button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+.right-button {
+    text-align: right;
+    float: right;
+    padding-right: 10px;
+}
+
+.left-button {
+    text-align: left;
+    color: white;
+    font-weight: bolder;
+}
+
+/* ── Delete button ── */
+
+.delete-button {
+    color: var(--primary);
+    position: absolute;
+    right: 0;
+    top: 0;
+    cursor: pointer;
+    font-weight: bolder;
+    font-size: 1.5rem;
+    padding: 0 0 3px 3px;
+    margin: 0 0 3px 3px;
+}
+
+.delete-button:hover {
+    font-weight: bolder;
+    font-size: 1.8rem;
+}
+
+.delete-button:before {
+    content: '\00D7';
+}
+
+.delete-button--deleting {
+    color: var(--secondary);
+    pointer-events: none;
+    cursor: default;
+}
+
+.delete-button--deleting:before {
+    content: '';
+}
+
+.delete-spinner {
+    width: 14px;
+    height: 14px;
+    border: 2px solid var(--secondary);
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    display: inline-block;
+}
+
+/* ── Dialog ── */
+
+.dialog {
+    padding: 2px 2px 5px 2px;
+    border: 1px solid var(--accent);
+    border-radius: 4px;
+    box-shadow: 0 5px 10px 0 rgba(43, 35, 35, 0.6);
+    max-width: 32vw;
+    box-sizing: border-box;
+    width: 35vw;
+}
+
+.close-dialog {
+    text-align: right;
+    float: right;
+    color: var(--white);
+}
+
+/* ── Messages ── */
+
+.message {
+    border: 1px solid;
+    border-radius: 4px;
+    padding: 6px;
+    margin: 4px;
+}
+
+.error-message {
+    color: var(--error-color);
+    border: 1px solid var(--error-color);
+}
+
+.warning-message {
+    color: var(--warning-color);
+    border: 1px solid var(--warning-color);
+}
+
+.info-message {
+    color: var(--accent);
+    border: 1px solid var(--accent);
+}
+
+/* ── Forms ── */
+
+label {
+    font-weight: bold;
+    display: block;
+    margin-bottom: 0.5rem;
+    padding-top: 5px;
+}
+
+input {
+    padding: 6px;
+    border: 1px solid var(--accent);
+    border-radius: 4px;
+    font-size: 1em;
+    width: 100%;
+    box-sizing: border-box;
+    margin: 2px;
+}
+
+.form-field {
+    margin: 8px 0;
+    display: flex;
+    flex-direction: column;
+    border-top: var(--accent) 1px solid;
+    padding-top: 10px;
+}
+
+.form-container {
+    margin: 5px;
+    display: block;
+}
+
+.form-components {
+    margin: 4px;
+    border-bottom: 1px solid var(--secondary);
+    padding-bottom: 5px;
+    width: 100%;
+}
+
+.form-actions {
+    margin-top: 12px;
+    display: block;
+    float: right;
+}
+
+.value-label {
+    font-weight: bold;
+    padding-right: 10px;
+    font-size: 1rem;
+}
+
+.field-value {
+    font-size: 1rem;
+}
+
+/* ── Password / input wrappers ── */
+
+.input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+
+.password-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+
+.password-input {
+    flex: 1;
+    min-width: 0;
+    box-sizing: border-box;
+    padding-right: 2.5rem;
+}
+
+.password-toggle {
+    position: absolute;
+    right: 0.5rem;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--primary);
+    padding: 0;
+    display: flex;
+    align-items: center;
+}
+
+.password-toggle:hover {
+    color: var(--accent);
+}
+
+.input-button {
+    position: absolute;
+    right: 0.5rem;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--primary);
+    padding: 0;
+    display: flex;
+    align-items: center;
+    font-size: 1.5em;
+}
+
+.input-button:hover {
+    color: var(--accent);
+}
+
+/* ── Autocomplete dropdown ── */
+
+.autocomplete-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: var(--background);
+    border: 1px solid var(--secondary);
+    border-top: none;
+    z-index: 1000;
+    max-height: 200px;
+    overflow-y: auto;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.autocomplete-item {
+    padding: 8px 10px;
+    cursor: pointer;
+    color: var(--text);
+    font-size: 1rem;
+}
+
+.autocomplete-item:hover,
+.autocomplete-item-selected {
+    background: var(--accent);
+    color: var(--white);
+}
+
+/* ── Login ── */
+
+.login-container {
+    width: 420px;
+    margin: 4rem auto 0;
+    padding: 2rem 2rem 1.5rem;
+    border: 1px solid var(--accent);
+    border-radius: 8px;
+    background: var(--background);
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
+    box-sizing: border-box;
+}
+
+.login-title {
+    margin: 0 0 1.5rem;
+    font-size: 1.5rem;
+    text-align: center;
+}
+
+.login-submit {
+    width: 100%;
+    padding: 0.6rem 0;
+    font-size: 1rem;
+}
+
+.login-create-account {
+    margin-top: 1.25rem;
+    text-align: center;
+    font-size: 0.9rem;
+}
+
+.login-form {
+    width: 100%;
+}
+
+.new-password-separator {
+    border-bottom: 1px solid var(--accent);
+    padding: 8px 0 4px;
+    font-weight: bold;
+    color: var(--primary);
+    margin-top: 8px;
+}
+
+/* ── Misc ── */
+
+.red {
+    color: red;
+}
+
+/* ── Mobile ── */
+
+@media (max-width: 768px) {
+    .main {
+        width: 100%;
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    .top-toolbar {
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .main-width {
+        width: 100%;
+    }
+
+    .side-menu {
+        left: 0;
+        width: 75vw;
+    }
+
+    .user-badge {
+        display: none;
+    }
+
+    .login-container {
+        width: calc(100% - 2rem);
+        margin: 2rem 1rem 0;
+        padding: 1.5rem;
+    }
+
+    .login-form {
+        width: 100%;
+    }
+
+    .data-grid {
+        width: 100%;
+        height: auto;
+        border: 0;
+        box-sizing: border-box;
+        overflow-x: auto;
+    }
+
+    .data-grid-row {
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .grid-cell {
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .page-header {
+        top: 35px;
+        padding: 8px 0;
+    }
+
+    .delete-button {
+        font-size: 1.8em;
+    }
+
+    .value-label {
+        font-size: 0.85rem;
+    }
+
+    .field-value {
+        font-size: 0.75rem;
+    }
+
+    .dialog {
+        width: 90vw;
+        max-width: 90vw;
+    }
+
+    textarea, select {
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .plus-sign {
+        font-size: 1.5rem;
+    }
+
+    .entropy-indicator {
+        min-height: 1.2rem;
+        margin-top: 0.25rem;
+    }
+}

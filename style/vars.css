@@ -1,0 +1,32 @@
+/* Default theme variables — override any of these in your own CSS to customise the theme. */
+
+:root {
+    --text: #050315;
+    --background: #eeeff4;
+    --primary: #2f27ce;
+    --secondary: #dedcff;
+    --accent: #433bff;
+    --white: #ffffff;
+    --error-color: #e33030;
+    --warning-color: #e3a330;
+}
+
+/* .main gets a slightly lighter background than the outer body */
+.main {
+    --text: #050315;
+    --background: #fbfbfe;
+    --primary: #2f27ce;
+    --secondary: #dedcff;
+    --accent: #433bff;
+    --white: #ffffff;
+    --error-color: #e33030;
+    --warning-color: #e3a330;
+}
+
+.main[data-theme="dark"] {
+    --text: #ebe9fc;
+    --background: #010104;
+    --primary: #3a31d8;
+    --secondary: #020024;
+    --accent: #0600c2;
+}

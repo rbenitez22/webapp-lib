@@ -1,0 +1,106 @@
+/* Initial page-load spinner (shown before WASM mounts) and in-app animation classes. */
+
+/* ── Initial loading screen ── */
+#loading {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--background, #fbfbfe);
+    z-index: 9999;
+}
+
+/* Auto-hide once Leptos mounts and <main> appears */
+body:has(main) #loading {
+    display: none;
+}
+
+/* ── Spinner ── */
+.spinner {
+    width: 52px;
+    height: 52px;
+    border: 5px solid var(--secondary, #dedcff);
+    border-top-color: var(--accent, #433bff);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+/* In-app spinner overlay */
+.spinner-overlay {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(0, 0, 0, 0.35);
+    z-index: 9999;
+}
+
+.loading-text {
+    margin-top: 1.25rem;
+    color: var(--primary, #2f27ce);
+    font-family: sans-serif;
+    font-size: 1rem;
+    letter-spacing: 0.05em;
+}
+
+/* ── Keyframes ── */
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* ── Save button animated border ── */
+@keyframes border-sweep {
+    0%   { border-color: var(--accent, #433bff) var(--secondary, #dedcff) var(--secondary, #dedcff) var(--secondary, #dedcff); }
+    25%  { border-color: var(--secondary, #dedcff) var(--accent, #433bff) var(--secondary, #dedcff) var(--secondary, #dedcff); }
+    50%  { border-color: var(--secondary, #dedcff) var(--secondary, #dedcff) var(--accent, #433bff) var(--secondary, #dedcff); }
+    75%  { border-color: var(--secondary, #dedcff) var(--secondary, #dedcff) var(--secondary, #dedcff) var(--accent, #433bff); }
+    100% { border-color: var(--accent, #433bff) var(--secondary, #dedcff) var(--secondary, #dedcff) var(--secondary, #dedcff); }
+}
+
+button.saving {
+    border: 2px solid;
+    animation: border-sweep 0.8s linear infinite;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+/* ── Inline refresh spinner (inside input fields) ── */
+.input-refresh-spinning {
+    border: 2px solid var(--secondary, #dedcff);
+    border-top-color: var(--accent, #433bff);
+    border-radius: 50%;
+    width: 1rem;
+    height: 1rem;
+    animation: spin 0.8s linear infinite;
+    pointer-events: none;
+    cursor: default;
+    box-sizing: border-box;
+}
+
+.input-refresh-spinning::before {
+    content: '' !important;
+}
+
+/* ── Item status spinner ── */
+.item-status-saving {
+    border: 3px solid var(--secondary, #dedcff) !important;
+    border-top-color: var(--accent, #433bff) !important;
+    border-radius: 50% !important;
+    width: 1.6rem !important;
+    height: 1.6rem !important;
+    animation: spin 0.8s linear infinite;
+    pointer-events: none;
+    cursor: default;
+    box-sizing: border-box;
+    align-self: center;
+    justify-self: center;
+    margin: auto;
+}
+
+.item-status-saving::before {
+    content: '' !important;
+}

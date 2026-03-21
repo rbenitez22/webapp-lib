@@ -1,0 +1,208 @@
+/* Miscellaneous Symbols (U+2600..U+26FF) */
+.sun:before { content: '\2600'; padding: 4px; }            /* ☀ */
+.cloud:before { content: '\2601'; padding: 4px; }          /* ☁ */
+.umbrella:before { content: '\2602'; padding: 4px; }       /* ☂ */
+.snowman:before { content: '\2603'; padding: 4px; }        /* ☃ */
+.comet:before { content: '\2604'; padding: 4px; }          /* ☄ */
+.star:before { content: '\2605'; padding: 4px; }           /* ★ */
+.star-outline:before { content: '\2606'; padding: 4px; }   /* ☆ */
+.telephone:before { content: '\260E'; padding: 4px; }      /* ☎ */
+.ballot-box:before { content: '\2610'; padding: 4px; }     /* ☐ */
+.ballot-box-with-check:before { content: '\2611'; padding: 4px; } /* ☑ (alias) */
+.checkbox-checked:before { content: '\2611'; padding: 4px; } /* ☑ */
+.umbrella-with-rain:before { content: '\2614'; padding: 4px; } /* ☔ */
+.hot-beverage:before { content: '\2615'; padding: 4px; }    /* ☕ */
+.shamrock:before { content: '\2618'; padding: 4px; }       /* ☘ */
+.pointing-up:before { content: '\261D'; padding: 4px; }    /* ☝ */
+.skull-and-crossbones:before { content: '\2620'; padding: 4px; } /* ☠ */
+.radioactive:before { content: '\2622'; padding: 4px; }    /* ☢ */
+.biohazard:before { content: '\2623'; padding: 4px; }      /* ☣ */
+.yin-yang:before { content: '\262F'; padding: 4px; }       /* ☯ */
+.smiling-face:before { content: '\263A'; padding: 4px; }   /* ☺ */
+.frowning-face:before { content: '\2639'; padding: 4px; }  /* ☹ */
+.spade:before { content: '\2660'; padding: 4px; }          /* ♠ */
+.club:before { content: '\2663'; padding: 4px; }           /* ♣ */
+.heart:before { content: '\2665'; padding: 4px; }          /* ♥ */
+.diamond:before { content: '\2666'; padding: 4px; }        /* ♦ */
+.hot-springs:before { content: '\2668'; padding: 4px; }    /* ♨ */
+.recycle:before { content: '\267B'; padding: 4px; }        /* ♻ */
+.wheelchair:before { content: '\267F'; padding: 4px; }     /* ♿ */
+
+/* Dingbats (U+2700..U+27BF) — descriptive, lowercase, hyphenated names */
+.scissors:before { content: '\2702'; padding: 4px; }            /* ✂ */
+.lower-left-scissors:before { content: '\2703'; padding: 4px; } /* ✃ */
+.outlined-shear:before { content: '\2704'; padding: 4px; }      /* ✄ */
+.check-mark-box:before { content: '\2705'; padding: 4px; }      /* ✅ */
+.envelope:before { content: '\2709'; padding: 4px; }            /* ✉ */
+.airplane:before { content: '\2708'; padding: 4px; }            /* ✈ */
+.white-hand:before { content: '\270B'; padding: 4px; }          /* ✋ */
+.victory-hand:before { content: '\270C'; padding: 4px; }        /* ✌ */
+.pencil:before { content: '\270E'; padding: 4px; }              /* ✎ */
+.pencil-alt:before { content: '\270F'; padding: 4px; }          /* ✏ */
+.check-mark:before { content: '\2713'; padding: 4px; }          /* ✓ */
+.heavy-check-mark:before { content: '\2714'; padding: 4px; }    /* ✔ */
+.multiply:before { content: '\2716'; padding: 4px; }            /* ✕ */
+.heavy-multiplication-x:before { content: '\2716'; padding: 4px; } /* ✖ (alias) */
+.ballot-x:before { content: '\2717'; padding: 4px; }            /* ✗ */
+.star-in-circle:before { content: '\2721'; padding: 4px; }      /* ✡ */
+.sparkles:before { content: '\2728'; padding: 4px; }            /* ✨ */
+.fleur-de-lis:before { content: '\273F'; padding: 4px; }        /* ✿ */
+.asterisk:before { content: '\2733'; padding: 4px; }            /* ✳ */
+.eight-point-star:before { content: '\2734'; padding: 4px; }    /* ✴ */
+.snowflake:before { content: '\2744'; padding: 4px; }           /* ❄ */
+.sparkle:before { content: '\2747'; padding: 4px; }             /* ❇ */
+.cross-mark:before { content: '\274C'; padding: 4px; }          /* ❌ */
+.cross-mark-square:before { content: '\274E'; padding: 4px; }   /* ❎ */
+.bulleted-list:before { content: '\2756'; padding: 4px; }       /* ❖ */
+.heavy-exclamation:before { content: '\2757'; padding: 4px; }   /* ❗ */
+.question-mark-decoration:before { content: '\2753'; padding: 4px; } /* ❓ */
+.heavy-asterisk:before { content: '\273A'; padding: 4px; }      /* ✺ */
+
+/* arrows & pointers */
+.rightwards-arrow:before { content: '\27A1'; padding: 4px; }     /* ➡ (alias) */
+.triangle-point-right:before { content: '\25B6'; padding: 4px; } /* ► */
+.triangle-point-left:before { content: '\25C0'; padding: 4px; }  /* ◀ */
+
+/* ornamental dingbats and numbered/parenthesized forms */
+.parenthesized-1:before { content: '\2776'; padding: 4px; }      /* ❶ */
+.parenthesized-2:before { content: '\2777'; padding: 4px; }      /* ❷ */
+.parenthesized-3:before { content: '\2778'; padding: 4px; }      /* ❸ */
+.parenthesized-4:before { content: '\2779'; padding: 4px; }      /* ❹ */
+
+/* hearts, stars, and other common dingbats */
+.heavy-heart:before { content: '\2764'; padding: 4px; }         /* ❤ */
+.white-heart:before { content: '\2765'; padding: 4px; }         /* ❥ */
+.black-heart:before { content: '\2766'; padding: 4px; }         /* ❦ */
+.flower-heart:before { content: '\2767'; padding: 4px; }        /* ❧ */
+.starburst:before { content: '\2731'; padding: 4px; }           /* ✱ */
+
+/* ornamental ornaments */
+.curling-underline:before { content: '\2768'; padding: 4px; }   /* ❨ */
+.curling-underline-right:before { content: '\2769'; padding: 4px; } /* ❩ */
+
+/* extra dingbats (fallback descriptive names where appropriate) */
+.black-center-white-star:before { content: '\272F'; padding: 4px; } /* ✯ */
+.white-large-square:before { content: '\2751'; padding: 4px; }      /* ❑ */
+.heavy-black-heart:before { content: '\2764'; padding: 4px; }       /* ❤ (alias) */
+
+/* End of added icon classes */
+
+/* Misc Symbols & Pictographs (U+1F300..U+1F5FF) */
+.cyclone:before { content: '\01F300'; padding: 4px; }          /* 🌀 */
+.earth-europe-africa:before { content: '\01F30D'; padding: 4px; } /* 🌍 */
+.earth-americas:before { content: '\01F30E'; padding: 4px; }      /* 🌎 */
+.globe-with-meridians:before { content: '\01F310'; padding: 4px; } /* 🌐 */
+.glowing-star:before { content: '\01F31F'; padding: 4px; }        /* 🌟 */
+.shooting-star:before { content: '\01F320'; padding: 4px; }       /* 🌠 */
+.seedling:before { content: '\01F331'; padding: 4px; }            /* 🌱 */
+.hibiscus:before { content: '\01F33A'; padding: 4px; }            /* 🌺 */
+.sunflower:before { content: '\01F33B'; padding: 4px; }           /* 🌻 */
+.palm-tree:before { content: '\01F334'; padding: 4px; }           /* 🌴 */
+.light-bulb:before { content: '\01F4A1'; padding: 4px; }          /* 💡 */
+.money-bag:before { content: '\01F4B0'; padding: 4px; }           /* 💰 */
+.money-with-wings:before { content: '\01F4B8'; padding: 4px; }    /* 💸 */
+.page:before { content: '\01F4C4'; padding: 4px; }                /* 📄 */
+.memo:before { content: '\01F4DD'; padding: 4px; }                /* 📝 */
+.email:before { content: '\01F4E7'; padding: 4px; }               /* 📧 */
+.mobile-phone:before { content: '\01F4F1'; padding: 4px; }        /* 📱 */
+.magnifying-glass:before { content: '\01F50D'; padding: 4px; }    /* 🔍 */
+.microscope:before { content: '\01F52C'; padding: 4px; }          /* 🔬 */
+.fire:before { content: '\01F525'; padding: 4px; }                /* 🔥 */
+.bomb:before { content: '\01F4A3'; padding: 4px; }                /* 💣 */
+
+/* Emoticons (U+1F600..U+1F64F) — unique names only (avoid duplicates) */
+.grinning-face:before { content: '\01F600'; padding: 4px; }       /* 😀 */
+.beaming-face:before { content: '\01F601'; padding: 4px; }        /* 😁 */
+.joy-tears:before { content: '\01F602'; padding: 4px; }           /* 😂 */
+.smiley:before { content: '\01F603'; padding: 4px; }              /* 😃 */
+.smile:before { content: '\01F604'; padding: 4px; }               /* 😄 */
+.innocent-face:before { content: '\01F607'; padding: 4px; }       /* 😇 */
+.devil-face:before { content: '\01F608'; padding: 4px; }          /* 😈 */
+.winking-face:before { content: '\01F609'; padding: 4px; }        /* 😉 */
+.heart-eyes:before { content: '\01F60D'; padding: 4px; }          /* 😍 */
+.unamused-face:before { content: '\01F612'; padding: 4px; }       /* 😒 */
+.pensive-face:before { content: '\01F614'; padding: 4px; }        /* 😔 */
+.crying-face:before { content: '\01F622'; padding: 4px; }         /* 😢 */
+.loudly-crying-face:before { content: '\01F62D'; padding: 4px; }  /* 😭 */
+.dizzy-face:before { content: '\01F635'; padding: 4px; }          /* 😵 */
+.masked-face:before { content: '\01F637'; padding: 4px; }         /* 😷 */
+
+/* Transport & Map Symbols (U+1F680..U+1F6FF) */
+.rocket:before { content: '\01F680'; padding: 4px; }              /* 🚀 */
+.delivery-truck:before { content: '\01F69A'; padding: 4px; }      /* 🚚 */
+.taxi:before { content: '\01F695'; padding: 4px; }                /* 🚕 */
+.car:before { content: '\01F697'; padding: 4px; }                 /* 🚗 */
+.bicycle:before { content: '\01F6B2'; padding: 4px; }             /* 🚲 */
+.ship:before { content: '\01F6A2'; padding: 4px; }                /* 🚢 */
+
+/* UI pictographs / common pictographs */
+.speaker:before { content: '\01F50A'; padding: 4px; }             /* 🔊 */
+.battery:before { content: '\01F50B'; padding: 4px; }             /* 🔋 */
+.floppy-disk:before { content: '\01F4BE'; padding: 4px; }         /* 💾 */
+.desktop-computer:before { content: '\01F5A5'; padding: 4px; }    /* 🖥 */
+
+/* Geometric Shapes (U+25A0..U+25FF) — reinserted */
+.black-square:before { content: '\25A0'; padding: 4px; }            /* ■ */
+.white-square:before { content: '\25A1'; padding: 4px; }            /* □ */
+.white-square-rounded:before { content: '\25A2'; padding: 4px; }    /* ▢ */
+.white-square-small:before { content: '\25A3'; padding: 4px; }      /* ▣ */
+.black-small-square:before { content: '\25AA'; padding: 4px; }      /* ▪ */
+.white-small-square:before { content: '\25AB'; padding: 4px; }      /* ▫ */
+.black-up-triangle:before { content: '\25B2'; padding: 4px; }       /* ▲ */
+.white-up-triangle:before { content: '\25B3'; padding: 4px; }       /* △ */
+.black-right-triangle:before { content: '\25B6'; padding: 4px; }    /* ► */
+.black-down-triangle:before { content: '\25BC'; padding: 4px; }     /* ▼ */
+.white-down-triangle:before { content: '\25BD'; padding: 4px; }     /* ▽ */
+.black-left-triangle:before { content: '\25C0'; padding: 4px; }     /* ◀ */
+.black-diamond:before { content: '\25C6'; padding: 4px; }          /* ◆ */
+.white-diamond:before { content: '\25C7'; padding: 4px; }          /* ◇ */
+.white-circle:before { content: '\25CB'; padding: 4px; }           /* ○ */
+.black-circle:before { content: '\25CF'; padding: 4px;  }           /* ● */
+.large-circle:before { content: '\25EF'; padding: 4px; }           /* ◯ */
+.circle-star:before { content: '\235F'; padding: 4px; }
+.left-pointing-angle-bracket:before { content: '\25C1'; padding: 4px; } /* ◁ */
+.right-pointing-angle-bracket:before { content: '\25B7'; padding: 4px; } /* ▷ */
+.lozenge:before { content: '\25CA'; padding: 4px; }                /* ◊ */
+.inverse-vertical-bar:before { content: '\25AC'; padding: 4px; }    /* ▬ */
+.white-rectangle:before { content: '\25AD'; padding: 4px; }        /* ▭ */
+.black-rectangle:before { content: '\25AE'; padding: 4px; }        /* ▮ */
+.black-vertical-rectangle:before { content: '\25AF'; padding: 4px; } /* ▯ */
+
+.shopping-trolley:before { content: '\01F6D2'; padding: 4px; }      /* 🛒 */
+.open-centre-cross:before { content: '\2719'; padding: 4px; }        /* ✙ */
+.heavy-plus-sign:before{
+    content: '\2795';
+    padding: 4px;
+}
+.plus-sign:before{
+    content: '+';
+    padding: 4px;
+}
+.circled-i:before { content: '\24D8'; padding: 4px; }
+/* End of re-inserted entries */
+
+/* ARROWS */
+.leftwards-arrow::before{ content: '\2190'; padding: 4px; }
+.upwards-arrow::before{ content: '\2191'; padding: 4px; }
+.rightwards-arrow::before{ content: '\2192'; padding: 4px; }
+.downwards-arrow::before{ content: '\2193'; padding: 4px; }
+.upwards-black-arrow::before{ content: '\2B06'; padding: 4px; }
+.downwards-black-arrow::before{ content: '\2B07'; padding: 4px;}
+.white-up-pointing-index::before{ content: '\261D'; padding: 4px; }
+.outlined-black-star::before{ content: '\272D'; padding: 4px; } /* ⭐  */
+.money-arrow::before{ content: '\273D'; padding: 4px; }
+.shopping-trolley::before{ content: '\1F6D2'; padding: 4px; }
+.basket::before{ content: '\1F9FA'; padding: 4px; }
+.package::before{ content: '\1F4E6'; padding: 4px; }
+.speech-balloon::before{ content: '\1F4AC'; padding: 4px; }
+.white-heavy-check-mark::before{ content: '\2705'; padding: 4px; }
+.warning-sign::before{ content: '\26A0'; padding: 4px; }
+.circle-latin-small-letter-i::before{ content: '\24D8'; padding: 4px; }
+.trigram-for-heaven::before{ content: '\2630'; padding: 4px; }
+.open-lock::before{ content: '\1F513'; padding: 4px; }           /* 🔓 */
+.closed-lock-with-key::before{ content: '\1F510'; padding: 4px; } /* 🔐 */
+.black-downwards-equilateral-arrow::before{ content: '\2B9F'; padding: 4px; }
+.downwards-triple-error::before{ content: '\290B'; padding: 4px; }
+.script-capital-f::before{ content: '\2131'; padding: 4px; }
+.bookmarks-tab::before{ content: '\1F4D1'; padding: 4px; }
+.clockwise-gapped-circle-arrow::before{ content: '\27F3'; padding: 4px; }
