@@ -416,6 +416,8 @@ pub fn SideMenu(
     /// Reactive username shown as a badge in the toolbar and at the bottom of
     /// the drawer. Pass `Signal::derive(move || user.get().display_name)`.
     #[prop(optional, into)] user_name: Option<Signal<String>>,
+    /// When provided, the entire menu is hidden while the user is logged out.
+    #[prop(optional, into)] is_authenticated: Option<Signal<bool>>,
 ) -> impl IntoView {
     let open = RwSignal::new(false);
     provide_context(open);
@@ -430,7 +432,9 @@ pub fn SideMenu(
                 />
                 {title.map(|t| view! { <span style="color: var(--white);">{t}</span> })}
                 {user_name.map(|name| view! {
-                    <span class="user-badge">{move || name.get()}</span>
+                    <Show when=move || is_authenticated.map(|a| a.get()).unwrap_or(true)>
+                        <span class="user-badge">{move || name.get()}</span>
+                    </Show>
                 })}
             </div>
 
