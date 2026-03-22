@@ -1,3 +1,6 @@
+mod autocomplete;
+pub use autocomplete::{AutocompleteInput, AutocompleteInputModel};
+
 use leptos::html::Dialog;
 use leptos::prelude::*;
 use leptos::{component, view, IntoView};
