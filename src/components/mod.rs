@@ -1,6 +1,14 @@
 mod autocomplete;
 pub use autocomplete::{AutocompleteInput, AutocompleteInputModel};
 
+#[cfg(feature = "auth")]
+mod auth;
+#[cfg(feature = "auth")]
+pub use auth::{
+    Account, AccountEditor, Invitations, InvitationEditForm, InvitationView,
+    Login, Logout, NewAccount,
+};
+
 use leptos::html::Dialog;
 use leptos::prelude::*;
 use leptos::{component, view, IntoView};

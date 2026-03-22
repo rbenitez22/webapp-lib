@@ -15,7 +15,7 @@ pub fn set_base_url(url: &str) {
     let _ = BASE_URL.set(url.to_string());
 }
 
-fn base_url() -> &'static str {
+pub(crate) fn base_url() -> &'static str {
     BASE_URL.get().map(|s| s.as_str()).unwrap_or("")
 }
 
