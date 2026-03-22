@@ -16,8 +16,12 @@ Features are additive. Each feature enables the ones it depends on.
 
 ```toml
 # Cargo.toml
-[dependencies]
-webapp-lib = { path = "…/webapp-lib", features = ["components"] }
+
+# From GitHub (recommended for normal use):
+webapp-lib = { git = "ssh://git@github.com/rbenitez22/webapp-lib.git", features = ["components"] }
+
+# Local path (for active co-development on the library itself):
+# webapp-lib = { path = "…/webapp-lib", features = ["components"] }
 ```
 
 ---
