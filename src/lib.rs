@@ -38,3 +38,6 @@ pub mod theme;
 
 #[cfg(feature = "components")]
 pub mod components;
+
+#[cfg(feature = "auth")]
+pub mod auth;

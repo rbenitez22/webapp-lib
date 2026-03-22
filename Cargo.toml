@@ -33,9 +33,14 @@ components = [
     "reactive",
     "theme",
 ]
+auth = [
+    "components",
+    "dep:leptos-use",
+]
 
 [dependencies]
 leptos        = { version = "0.8.14", features = ["csr"], optional = true }
+leptos-use    = { version = "0.16.3", optional = true }
 leptos_router = { version = "0.8.10", optional = true }
 serde         = { version = "1.0", features = ["derive"], optional = true }
 serde_json    = { version = "1.0", optional = true }
