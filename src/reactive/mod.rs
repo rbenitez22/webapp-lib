@@ -262,6 +262,39 @@ pub fn update_record<D>(
 }
 
 // ---------------------------------------------------------------------------
+// update_resource
+//
+// Sends a PUT request with `body` serialised as JSON to the given ResourcePath
+// and invokes one of two callbacks depending on the outcome.
+//
+// on_success receives the deserialised response body (same type T).
+// on_fail receives the error as a String.
+// ---------------------------------------------------------------------------
+
+pub fn update_resource<T>(
+    path: crate::http::ResourcePath,
+    body: T,
+    auth: Signal<Option<String>>,
+    on_success: impl Fn(T) + 'static,
+    on_fail: impl Fn(String) + 'static,
+) where
+    T: Serialize + DeserializeOwned + Send + Sync + 'static,
+{
+    let path_str = path.to_string();
+    let Some(token) = auth.get_untracked() else {
+        on_fail("Not authenticated".to_string());
+        return;
+    };
+    spawn_local(async move {
+        let req = ApiRequest::new(&HttpMethod::PUT, Some(token.as_str()), &path_str, &body);
+        match send_request::<T, T>(req).await {
+            Ok(saved) => on_success(saved),
+            Err(e)    => on_fail(e.to_string()),
+        }
+    });
+}
+
+// ---------------------------------------------------------------------------
 // load_reference_data_list
 //
 // Loads a Vec<LookupData> for a given endpoint key, with local-storage caching.
@@ -307,6 +340,101 @@ pub fn load_reference_data_list(
                 }
             }
         });
+    });
+}
+
+// ---------------------------------------------------------------------------
+// load_resource_list
+//
+// Fetches a Vec<T> from an arbitrary ResourcePath without any caching.
+// Useful for data that must always be fresh (e.g. permissions, user lists).
+//
+// auth: Signal<Option<String>> — current JWT token.  When None the load is
+//       skipped and `error` is left as None.
+// data:  populated on success.
+// error: set to Some(message) on failure; None while loading or on success.
+// ---------------------------------------------------------------------------
+
+pub fn load_resource_list<T>(
+    path: crate::http::ResourcePath,
+    auth: Signal<Option<String>>,
+    data: RwSignal<Vec<T>>,
+    error: RwSignal<Option<String>>,
+) where
+    T: DeserializeOwned + Clone + Send + Sync + 'static,
+{
+    let path_str = path.to_string();
+    Effect::new(move |_| {
+        let Some(token) = auth.get() else { return; };
+        let path = path_str.clone();
+        spawn_local(async move {
+            match send_get::<Vec<T>>(&token, &path).await {
+                Ok(rows) => data.set(rows),
+                Err(e)   => error.set(Some(e.to_string())),
+            }
+        });
+    });
+}
+
+// ---------------------------------------------------------------------------
+// load_resource
+//
+// Fetches a single T from an arbitrary ResourcePath (e.g. a get-by-id call)
+// without any caching.
+//
+// auth: Signal<Option<String>> — current JWT token.  When None the load is
+//       skipped and `error` is left as None.
+// data:  set to Some(T) on success.
+// error: set to Some(message) on failure; None while loading or on success.
+// ---------------------------------------------------------------------------
+
+pub fn load_resource<T>(
+    path: crate::http::ResourcePath,
+    auth: Signal<Option<String>>,
+    data: RwSignal<Option<T>>,
+    error: RwSignal<Option<String>>,
+) where
+    T: DeserializeOwned + Clone + Send + Sync + 'static,
+{
+    let path_str = path.to_string();
+    Effect::new(move |_| {
+        let Some(token) = auth.get() else { return; };
+        let path = path_str.clone();
+        spawn_local(async move {
+            match send_get::<T>(&token, &path).await {
+                Ok(item) => data.set(Some(item)),
+                Err(e)   => error.set(Some(e.to_string())),
+            }
+        });
+    });
+}
+
+// ---------------------------------------------------------------------------
+// delete_resource
+//
+// Sends a DELETE request to the given ResourcePath and invokes one of two
+// callbacks depending on the outcome.  No caching is touched.
+//
+// auth: Signal<Option<String>> — current JWT token.  When None, on_fail is
+//       called immediately.
+// ---------------------------------------------------------------------------
+
+pub fn delete_resource(
+    path: crate::http::ResourcePath,
+    auth: Signal<Option<String>>,
+    on_success: impl Fn() + 'static,
+    on_fail: impl Fn(String) + 'static,
+) {
+    let path_str = path.to_string();
+    let Some(token) = auth.get_untracked() else {
+        on_fail("Not authenticated".to_string());
+        return;
+    };
+    spawn_local(async move {
+        match send_delete(&token, &path_str).await {
+            Ok(_)  => on_success(),
+            Err(e) => on_fail(e.to_string()),
+        }
     });
 }
 
