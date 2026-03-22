@@ -12,6 +12,14 @@ pub fn write_to_local_storage<T: Serialize>(key: &str, value: &T) {
     }
 }
 
+pub fn remove_from_local_storage(key: &str) {
+    if let Some(window) = web_sys::window() {
+        if let Ok(Some(ls)) = window.local_storage() {
+            let _ = ls.remove_item(key);
+        }
+    }
+}
+
 pub fn read_from_local_storage<T: DeserializeOwned>(key: &str) -> Option<T> {
     web_sys::window()
         .and_then(|w| w.local_storage().ok().flatten())

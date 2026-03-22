@@ -112,12 +112,19 @@ pub fn Login() -> impl IntoView {
 // ---------------------------------------------------------------------------
 
 #[component]
-pub fn Logout() -> impl IntoView {
+pub fn Logout(
+    #[prop(optional)] on_logout: Option<Callback<()>>,
+) -> impl IntoView {
     let navigate = use_navigate();
-    let (_, set_auth, _) = use_local_storage::<Auth, JsonSerdeCodec>(STORAGE_AUTH_KEY);
 
     Effect::new(move |_| {
-        set_auth.set(Auth::default());
+        if let Some(cb) = on_logout {
+            cb.run(());
+        }
+        write_to_local_storage(STORAGE_AUTH_KEY, &Auth::default());
+        crate::storage::dispatch_storage_event(STORAGE_AUTH_KEY);
+        write_to_local_storage(STORAGE_USER_KEY, &UserAccount::default());
+        crate::storage::dispatch_storage_event(STORAGE_USER_KEY);
         navigate(
             paths().login_page,
             NavigateOptions { replace: true, scroll: true, ..Default::default() },
