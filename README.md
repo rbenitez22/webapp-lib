@@ -2,17 +2,25 @@
 
 A reusable Leptos 0.8 CSR/WASM component library for Rust web applications. Provides HTTP utilities, browser storage helpers, reactive list/resource patterns, CSS theming, and a set of generic UI components.
 
+## Documentation
+
+- [Best Practices](docs/best-practices.md) — rules learned from real projects:
+  when to use library helpers, how to structure components, signal hygiene, and
+  Leptos-specific pitfalls.
+
+---
+
 ## Feature Flags
 
 Features are additive. Each feature enables the ones it depends on.
 
-| Feature | Enables | Description |
-|---|---|---|
-| `http` | — | HTTP client, `ResourcePath`, `ApiError` |
-| `storage` | — | `localStorage` / `sessionStorage` helpers |
-| `reactive` | `http`, `storage` | `ListComponentModel`, data-loading functions |
-| `theme` | — | CSS injection at runtime |
-| `components` | `reactive`, `theme` | All Leptos UI components |
+| Feature      | Enables             | Description                                                      |
+|--------------|---------------------|------------------------------------------------------------------|
+| `http`       | —                   | HTTP client, `ResourcePath`, `ApiError`                          |
+| `storage`    | —                   | `localStorage` / `sessionStorage` helpers                        |
+| `reactive`   | `http`, `storage`   | `HasId`, `HasName`, `ListComponentModel`, data-loading functions |
+| `theme`      | —                   | CSS injection at runtime                                         |
+| `components` | `reactive`, `theme` | All Leptos UI components                                         |
 
 ```toml
 # Cargo.toml
@@ -63,13 +71,13 @@ let path = ResourcePath::new("lists").id(list_id).child("permissions");
 // → "lists/42/permissions"
 ```
 
-| Method | Description |
-|---|---|
-| `new(base)` | Start a path from a base segment |
-| `.id(id)` | Append an id segment |
-| `.child(name)` | Append a sub-resource segment |
-| `.build()` | Return `String` |
-| `Display` | Same as `.build()` |
+| Method         | Description                      |
+|----------------|----------------------------------|
+| `new(base)`    | Start a path from a base segment |
+| `.id(id)`      | Append an id segment             |
+| `.child(name)` | Append a sub-resource segment    |
+| `.build()`     | Return `String`                  |
+| `Display`      | Same as `.build()`               |
 
 ### `ApiEndpoint` trait
 
@@ -163,18 +171,58 @@ dispatch_storage_event("auth");
 
 ## `reactive` — Reactive Patterns
 
-### `DataRow` trait
+### `HasId` / `HasName` traits
 
-Implement on any type used in a list:
+These replace the former `DataRow` trait. Functions only require the bound they
+actually use — `HasId` for operations that look up or route by id, `HasName` for
+display/sorting.
+
+Implement manually or derive using
+[ferrox-webapp-macros](https://github.com/rbenitez22/ferrox-webapp-macros):
+
+```toml
+# Cargo.toml — add alongside webapp-lib
+ferrox-webapp-macros = { git = "https://github.com/rbenitez22/ferrox-webapp-macros" }
+```
 
 ```rust
-use webapp_lib::reactive::DataRow;
+use webapp_lib::reactive::{HasId, HasName};
+use ferrox_webapp_macros::{HasId, HasName};
 
-impl DataRow for ShoppingList {
-    fn get_id(&self)   -> String { self.id.clone() }
+// Fields named `id` and `name` — defaults, no attribute needed
+#[derive(Clone, HasId, HasName)]
+pub struct ShoppingList { pub id: String, pub name: String }
+
+// Non-default field names — override with helper attributes
+#[derive(Clone, HasId, HasName)]
+#[has_name(field = "display_name")]
+pub struct UserAccount { pub id: String, pub display_name: String, pub email: String }
+
+#[derive(Clone, HasId, HasName)]
+#[has_id(field = "email")]
+#[has_name(field = "display_name")]
+pub struct UserAccountRequest { pub email: String, pub display_name: String }
+```
+
+Manual implementation (no macro dependency):
+
+```rust
+impl HasId for ShoppingList {
+    fn get_id(&self) -> String { self.id.clone() }
+}
+impl HasName for ShoppingList {
     fn get_name(&self) -> String { self.name.clone() }
 }
 ```
+
+| Bound required by                  | Traits needed     |
+|------------------------------------|-------------------|
+| `load_list_component_model`        | `HasName`         |
+| `create_persist_event` form type T | `HasId`           |
+| `create_persist_event` list type D | `HasId + HasName` |
+| `create_delete_event`              | `HasId`           |
+| `update_record`                    | `HasId`           |
+| `render_options`                   | `HasName`         |
 
 ### `ListComponentModel<D>`
 
@@ -194,7 +242,7 @@ model.data     // RwSignal<Vec<D>>
 
 ### `load_list_component_model`
 
-Fetches the list on mount, redirects to login on 401:
+Fetches the list on mount, redirects to the login page on 401:
 
 ```rust
 load_list_component_model(model.clone(), use_navigate(), Some(sorter_fn), "/login");
@@ -220,17 +268,19 @@ let on_delete = create_delete_event(item.get_id(), model.clone());
 use webapp_lib::reactive::load_resource_list;
 use webapp_lib::http::ResourcePath;
 
-let data:  RwSignal<Vec<Permission>>    = RwSignal::new(vec![]);
-let error: RwSignal<Option<String>>     = RwSignal::new(None);
+let data:    RwSignal<Vec<Permission>>  = RwSignal::new(vec![]);
+let error:   RwSignal<Option<String>>  = RwSignal::new(None);
+let loading: RwSignal<bool>            = RwSignal::new(false);
 
+// Pass Some(loading) to have the signal managed automatically,
+// or None if you manage loading state yourself.
 load_resource_list(
     ResourcePath::new("lists").id(list_id).child("permissions"),
     auth_token,
     data,
     error,
+    Some(loading),
 );
-
-// In view — loading: data empty + no error; error: error.get().is_some()
 ```
 
 #### `load_resource` — fetch a single item by id (no cache)
@@ -295,7 +345,7 @@ PUT for detail/edit pages that don't use `ListComponentModel`:
 ```rust
 update_record(
     "lists".to_string(),
-    form_model_value,         // D: DataRow + Serialize + DeserializeOwned
+    form_model_value,         // D: HasId + Serialize + DeserializeOwned
     auth_token,
     move |saved| { … },
     move |api_err| { … },
@@ -353,16 +403,16 @@ Override any variable in your own stylesheet:
 
 ### Default CSS variables
 
-| Variable | Role |
-|---|---|
-| `--text` | Body text colour |
-| `--background` | Page background |
-| `--primary` | Primary action colour |
-| `--secondary` | Secondary / muted colour |
-| `--accent` | Highlight / focus colour |
-| `--white` | White (toolbar text, etc.) |
-| `--error-color` | Error messages |
-| `--warning-color` | Warning messages |
+| Variable          | Role                       |
+|-------------------|----------------------------|
+| `--text`          | Body text colour           |
+| `--background`    | Page background            |
+| `--primary`       | Primary action colour      |
+| `--secondary`     | Secondary / muted colour   |
+| `--accent`        | Highlight / focus colour   |
+| `--white`         | White (toolbar text, etc.) |
+| `--error-color`   | Error messages             |
+| `--warning-color` | Warning messages           |
 
 ---
 
@@ -524,7 +574,7 @@ view! {
 
 ### `LookupDataView` / `LookupDataEditForm`
 
-Standard CRUD row + form pair for reference tables:
+Standard CRUD row plus form pair for reference tables:
 
 ```rust
 // Row

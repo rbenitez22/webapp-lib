@@ -8,14 +8,10 @@ use serde::{Deserialize, Serialize};
 
 use crate::http::{ApiError, ApiRequest, HttpMethod, send_delete, send_get, send_request};
 
-// ---------------------------------------------------------------------------
-// DataRow — implemented by any type that lives in a list
-// ---------------------------------------------------------------------------
-
-pub trait DataRow: Clone {
-    fn get_id(&self) -> String;
-    fn get_name(&self) -> String;
-}
+// Re-export the traits so webapp-lib consumers only need one import.
+pub use ferrox_traits::{HasId, HasName};
+// Derive macros in the macro namespace — needed for #[derive(HasId, HasName)] below.
+use ferrox_webapp_macros::{HasId, HasName};
 
 // ---------------------------------------------------------------------------
 // ListComponentModel — standard model for list pages
@@ -99,7 +95,7 @@ pub fn load_list_component_model<D>(
     sorter: Option<fn(&D, &D) -> Ordering>,
     login_path: &'static str,
 ) where
-    D: DataRow + DeserializeOwned + Clone + Send + Sync + 'static,
+    D: HasName + DeserializeOwned + Clone + Send + Sync + 'static,
 {
     let sorter = sorter.unwrap_or(|a: &D, b: &D| a.get_name().cmp(&b.get_name()));
 
@@ -149,8 +145,8 @@ pub fn create_persist_event<D, T>(
     on_save_success: impl FnOnce() + Clone + 'static,
 ) -> impl Fn(leptos::ev::SubmitEvent)
 where
-    T: DataRow + Send + Sync + Serialize + Clone + 'static,
-    D: DataRow + Send + Sync + Clone + DeserializeOwned + 'static,
+    T: HasId + Send + Sync + Serialize + Clone + 'static,
+    D: HasId + HasName + Send + Sync + Clone + DeserializeOwned + 'static,
 {
     move |ev: leptos::ev::SubmitEvent| {
         ev.prevent_default();
@@ -206,7 +202,7 @@ pub fn create_delete_event<D>(
     list_model: ListComponentModel<D>,
 ) -> impl Fn(leptos::ev::SubmitEvent)
 where
-    D: DataRow + Send + Sync + Clone + 'static,
+    D: HasId + Send + Sync + Clone + 'static,
 {
     move |ev: leptos::ev::SubmitEvent| {
         ev.prevent_default();
@@ -245,7 +241,7 @@ pub fn update_record<D>(
     on_success: impl FnOnce(D) + Clone + 'static,
     on_failure: impl Fn(ApiError) + Clone + 'static,
 ) where
-    D: DataRow + Send + Sync + Clone + DeserializeOwned + Serialize + 'static,
+    D: HasId + Send + Sync + Clone + DeserializeOwned + Serialize + 'static,
 {
     if let Some(token) = auth.get_untracked() {
         let path = format!("{}/{}", form_action, form_model.get_id());
@@ -280,6 +276,23 @@ pub fn update_resource<T>(
 ) where
     T: Serialize + DeserializeOwned + Send + Sync + 'static,
 {
+    update_resource_as(path, body, auth, on_success, on_fail);
+}
+
+/// Like [`update_resource`] but allows the response type `R` to differ from
+/// the request body type `B`.  Use this when the API accepts one shape and
+/// returns a richer one (e.g. sending `UpdatePermissionRequest`, receiving
+/// `StorePermission`).
+pub fn update_resource_as<B, R>(
+    path: crate::http::ResourcePath,
+    body: B,
+    auth: Signal<Option<String>>,
+    on_success: impl Fn(R) + 'static,
+    on_fail: impl Fn(String) + 'static,
+) where
+    B: Serialize + Send + Sync + 'static,
+    R: DeserializeOwned + Send + Sync + 'static,
+{
     let path_str = path.to_string();
     let Some(token) = auth.get_untracked() else {
         on_fail("Not authenticated".to_string());
@@ -287,7 +300,7 @@ pub fn update_resource<T>(
     };
     spawn_local(async move {
         let req = ApiRequest::new(&HttpMethod::PUT, Some(token.as_str()), &path_str, &body);
-        match send_request::<T, T>(req).await {
+        match send_request::<B, R>(req).await {
             Ok(saved) => on_success(saved),
             Err(e)    => on_fail(e.to_string()),
         }
@@ -360,6 +373,7 @@ pub fn load_resource_list<T>(
     auth: Signal<Option<String>>,
     data: RwSignal<Vec<T>>,
     error: RwSignal<Option<String>>,
+    loading: Option<RwSignal<bool>>,
 ) where
     T: DeserializeOwned + Clone + Send + Sync + 'static,
 {
@@ -367,10 +381,17 @@ pub fn load_resource_list<T>(
     Effect::new(move |_| {
         let Some(token) = auth.get() else { return; };
         let path = path_str.clone();
+        if let Some(l) = loading { l.set(true); }
         spawn_local(async move {
             match send_get::<Vec<T>>(&token, &path).await {
-                Ok(rows) => data.set(rows),
-                Err(e)   => error.set(Some(e.to_string())),
+                Ok(rows) => {
+                    data.set(rows);
+                    if let Some(l) = loading { l.set(false); }
+                }
+                Err(e) => {
+                    error.set(Some(e.to_string()));
+                    if let Some(l) = loading { l.set(false); }
+                }
             }
         });
     });
@@ -419,6 +440,28 @@ pub fn load_resource<T>(
 //       called immediately.
 // ---------------------------------------------------------------------------
 
+/// Returns a plain `Fn()` closure that calls [`delete_resource`] when invoked.
+/// Use this when you need to pass a delete action as a callback prop rather
+/// than executing it immediately.
+///
+/// ```ignore
+/// let on_delete = create_delete_callback(
+///     Endpoint::Items.path().id(&item_id),
+///     auth,
+///     move || items.update(|is| is.retain(|i| i.id != item_id)),
+///     move |e| error.set(Some(e)),
+/// );
+/// // on_delete can now be passed as: on_delete=on_delete
+/// ```
+pub fn create_delete_callback(
+    path: crate::http::ResourcePath,
+    auth: Signal<Option<String>>,
+    on_success: impl Fn() + Clone + 'static,
+    on_fail: impl Fn(String) + Clone + 'static,
+) -> impl Fn() {
+    move || delete_resource(path.clone(), auth, on_success.clone(), on_fail.clone())
+}
+
 pub fn delete_resource(
     path: crate::http::ResourcePath,
     auth: Signal<Option<String>>,
@@ -441,24 +484,19 @@ pub fn delete_resource(
 // ---------------------------------------------------------------------------
 // LookupData — the common {id, name, description?} shape for reference/lookup
 // tables (categories, units, tags, etc.).  Clients that need a different shape
-// should define their own type and implement DataRow.
+// should define their own type and derive HasId / HasName as appropriate.
 // ---------------------------------------------------------------------------
 
-#[derive(Serialize, Deserialize, Clone, PartialEq, Default, Debug)]
+#[derive(Serialize, Deserialize, Clone, PartialEq, Default, Debug, HasId, HasName)]
 pub struct LookupData {
     pub id: String,
     pub name: String,
     pub description: Option<String>,
 }
 
-impl DataRow for LookupData {
-    fn get_id(&self) -> String { self.id.clone() }
-    fn get_name(&self) -> String { self.name.clone() }
-}
-
 /// Request body for creating or updating a `LookupData` record.
 /// An empty `id` means "create"; a non-empty `id` means "update".
-#[derive(Serialize, Deserialize, Clone, Default, Debug)]
+#[derive(Serialize, Deserialize, Clone, Default, Debug, HasId, HasName)]
 pub struct LookupDataRequest {
     pub id: String,
     pub name: String,
@@ -471,9 +509,4 @@ impl LookupDataRequest {
     pub fn from_data(data: LookupData) -> Self {
         Self { id: data.id, name: data.name, description: data.description }
     }
-}
-
-impl DataRow for LookupDataRequest {
-    fn get_id(&self) -> String { self.id.clone() }
-    fn get_name(&self) -> String { self.name.clone() }
 }

@@ -1,3 +1,4 @@
+
 mod autocomplete;
 pub use autocomplete::{AutocompleteInput, AutocompleteInputModel};
 
@@ -19,7 +20,7 @@ use serde::de::DeserializeOwned;
 use wasm_bindgen::JsCast;
 use web_sys::{HtmlInputElement, MouseEvent};
 
-use crate::reactive::{DataRow, LookupData, LookupDataRequest};
+use crate::reactive::{HasId, HasName, LookupData, LookupDataRequest};
 
 // ---------------------------------------------------------------------------
 // MessageType / MessageModel  (generic enough to live in the library)
@@ -106,7 +107,7 @@ pub fn submit_form(ev: MouseEvent) {
 
 pub fn render_options<D>(options: RwSignal<Vec<D>>, loading: RwSignal<bool>) -> impl IntoView
 where
-    D: DataRow + DeserializeOwned + Clone + Send + Sync + 'static,
+    D: HasName + DeserializeOwned + Clone + Send + Sync + 'static,
 {
     view! {
         {move || {
@@ -155,10 +156,10 @@ pub fn DeleteRowButton(on_delete: impl Fn(leptos::ev::SubmitEvent) + 'static) ->
 // ---------------------------------------------------------------------------
 
 #[component]
-pub fn DialogTitle(title: String, on_close: impl Fn(MouseEvent) + 'static) -> impl IntoView {
+pub fn DialogTitle(#[prop(into)] title: Signal<String>, on_close: impl Fn(MouseEvent) + 'static) -> impl IntoView {
     view! {
         <div class="title-bar">
-            <span>{title}</span>
+            <span>{move || title.get()}</span>
             <div class="button close-dialog multiply" on:click=on_close />
         </div>
     }
@@ -412,7 +413,7 @@ pub fn ConfirmDialog(
 #[component]
 pub fn SideMenu(
     children: Children,
-    #[prop(optional, into)] title: Option<String>,
+    #[prop(optional, into)] title: MaybeSignal<String>,
     /// Reactive username shown as a badge in the toolbar and at the bottom of
     /// the drawer. Pass `Signal::derive(move || user.get().display_name)`.
     #[prop(optional, into)] user_name: Option<Signal<String>>,
@@ -430,7 +431,10 @@ pub fn SideMenu(
                     on:click=move |_| open.set(true)
                     aria-label="Open menu"
                 />
-                {title.map(|t| view! { <span style="color: var(--white);">{t}</span> })}
+                {move || {
+                    let t = title.get();
+                    if t.is_empty() { None } else { Some(view! { <span style="color: var(--white);">{t}</span> }) }
+                }}
                 {user_name.map(|name| view! {
                     <Show when=move || is_authenticated.map(|a| a.get()).unwrap_or(true)>
                         <span class="user-badge">{move || name.get()}</span>

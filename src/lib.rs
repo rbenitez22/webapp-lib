@@ -6,7 +6,7 @@
 //! |---|---|
 //! | `http`       | `HttpMethod`, `ApiError`, `ResourcePath`, `ApiEndpoint`, `send_get/request/delete` |
 //! | `storage`    | `read/write_to_local/session_storage`, `dispatch_storage_event` |
-//! | `reactive`   | `DataRow`, `ListComponentModel`, `load_list_component_model`, `create_persist_event`, `create_delete_event`, `update_record`, navigate helpers |
+//! | `reactive`   | `HasId`, `HasName`, `ListComponentModel`, `load_list_component_model`, `create_persist_event`, `create_delete_event`, `update_record`, navigate helpers |
 //! | `theme`      | `ThemeVars`, `init()`, `init_with()` — CSS injection into `<head>` |
 //! | `components` | `DeleteRowButton`, `submit_form`, all generic UI components |
 //!

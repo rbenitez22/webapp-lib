@@ -67,6 +67,7 @@ impl std::fmt::Display for ApiError {
 // ResourcePath — fluent path builder
 // ---------------------------------------------------------------------------
 
+#[derive(Clone)]
 pub struct ResourcePath(Vec<String>);
 
 impl ResourcePath {

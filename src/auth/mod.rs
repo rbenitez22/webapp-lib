@@ -20,7 +20,8 @@ use std::sync::OnceLock;
 use wasm_bindgen::closure::Closure;
 use wasm_bindgen::JsCast;
 
-use crate::reactive::DataRow;
+use crate::reactive::{HasId, HasName};
+use ferrox_webapp_macros::{HasId, HasName};
 
 // ---------------------------------------------------------------------------
 // Storage keys
@@ -111,7 +112,8 @@ pub struct RefreshResponse {
     pub token: String,
 }
 
-#[derive(Debug, Default, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Default, Clone, PartialEq, Serialize, Deserialize, HasId, HasName)]
+#[has_name(field = "display_name")]
 pub struct UserAccount {
     pub id: String,
     pub display_name: String,
@@ -120,12 +122,9 @@ pub struct UserAccount {
     pub admin: bool,
 }
 
-impl DataRow for UserAccount {
-    fn get_id(&self) -> String { self.id.clone() }
-    fn get_name(&self) -> String { self.display_name.clone() }
-}
-
-#[derive(Debug, Default, Clone, Serialize, Deserialize)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize, HasId, HasName)]
+#[has_id(field = "email")]
+#[has_name(field = "display_name")]
 pub struct UserAccountRequest {
     pub display_name: String,
     pub email: String,
@@ -142,11 +141,6 @@ impl UserAccountRequest {
     }
 }
 
-impl DataRow for UserAccountRequest {
-    fn get_id(&self) -> String { self.email.clone() }
-    fn get_name(&self) -> String { self.display_name.clone() }
-}
-
 #[derive(Serialize, Deserialize)]
 pub struct UpdateNameRequest {
     pub display_name: String,
@@ -158,7 +152,8 @@ pub struct ChangePasswordRequest {
     pub new_password: String,
 }
 
-#[derive(Debug, Default, Clone, Serialize, Deserialize)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize, HasId, HasName)]
+#[has_name(field = "display_name")]
 pub struct InvitationRequest {
     pub id: String,
     pub email: String,
@@ -172,11 +167,6 @@ impl InvitationRequest {
     }
 }
 
-impl DataRow for InvitationRequest {
-    fn get_id(&self) -> String { self.id.clone() }
-    fn get_name(&self) -> String { self.display_name.clone() }
-}
-
 // ---------------------------------------------------------------------------
 // Reactive helpers
 // ---------------------------------------------------------------------------
@@ -186,6 +176,13 @@ impl DataRow for InvitationRequest {
 pub fn use_auth_token() -> Signal<Option<String>> {
     let (auth, _, _) = use_local_storage::<Auth, JsonSerdeCodec>(STORAGE_AUTH_KEY);
     Signal::derive(move || auth.get().token)
+}
+
+/// Returns a reactive signal containing the current user account (default when logged out).
+/// Must be called inside a reactive context (component or effect).
+pub fn use_user_account() -> Signal<UserAccount> {
+    let (account, _, _) = use_local_storage::<UserAccount, JsonSerdeCodec>(STORAGE_USER_KEY);
+    Signal::derive(move || account.get())
 }
 
 /// Returns a reactive signal that is `true` when the user is authenticated.

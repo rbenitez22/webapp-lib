@@ -459,6 +459,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "ferrox-traits"
+version = "0.1.0"
+
+[[package]]
+name = "ferrox-webapp-macros"
+version = "0.1.0"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
 name = "find-msvc-tools"
 version = "0.1.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2120,6 +2133,8 @@ dependencies = [
 name = "webapp-lib"
 version = "0.1.0"
 dependencies = [
+ "ferrox-traits",
+ "ferrox-webapp-macros",
  "js-sys",
  "leptos",
  "leptos-use",
@@ -2406,14 +2421,6 @@ name = "zmij"
 version = "1.0.21"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b8848ee67ecc8aedbaf3e4122217aff892639231befc6a1b58d29fff4c2cabaa"
-
-[[patch.unused]]
-name = "ferrox-webapp-macros"
-version = "0.1.0"
-
-[[patch.unused]]
-name = "ferrox-traits"
-version = "0.1.0"
 
 [[patch.unused]]
 name = "auth-client"
