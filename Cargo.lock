@@ -2408,5 +2408,13 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b8848ee67ecc8aedbaf3e4122217aff892639231befc6a1b58d29fff4c2cabaa"
 
 [[patch.unused]]
+name = "ferrox-webapp-macros"
+version = "0.1.0"
+
+[[patch.unused]]
+name = "ferrox-traits"
+version = "0.1.0"
+
+[[patch.unused]]
 name = "auth-client"
-version = "0.2.0"
+version = "0.2.1"
