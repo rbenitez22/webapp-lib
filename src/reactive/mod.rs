@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 use crate::http::{ApiError, ApiRequest, HttpMethod, send_delete, send_get, send_request};
 
 // Re-export the traits so webapp-lib consumers only need one import.
-pub use ferrox_traits::{HasId, HasName};
+pub use ferrox_traits::{HasId, HasName, HasParentId};
 // Derive macros in the macro namespace — needed for #[derive(HasId, HasName)] below.
 use ferrox_webapp_macros::{HasId, HasName};
 
@@ -428,6 +428,62 @@ pub fn load_resource<T>(
             }
         });
     });
+}
+
+// ---------------------------------------------------------------------------
+// create_nav_up_event
+//
+// Returns a MouseEvent handler that navigates to the parent resource when one
+// exists, or to the base `path` when at the root.
+//
+// Requires T to implement HasParentId.  The navigate function is typically
+// obtained from `use_navigate()`.
+//
+// Example:
+//   let nav_up = create_navigate_up_event(current_store, "/stores", navigate);
+// ---------------------------------------------------------------------------
+
+pub fn create_navigate_up_event<T, N>(
+    resource: RwSignal<Option<T>>,
+    path: &'static str,
+    navigate: N,
+) -> impl Fn(web_sys::MouseEvent)
+where
+    T: HasParentId + Clone + Send + Sync + 'static,
+    N: Fn(&str, NavigateOptions) + Clone + 'static,
+{
+    move |_| {
+        let parent = resource.get_untracked().and_then(|s| s.get_parent_id());
+        match parent {
+            Some(pid) => navigate(&format!("{path}/{pid}"), Default::default()),
+            None      => navigate(path, Default::default()),
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
+// sync_page_title
+//
+// Reactively mirrors the name of an Option<T: HasName> resource into the
+// page-title signal provided via context (RwSignal<String>).  Resets the
+// title to `default` when the component is torn down.
+//
+// Typical call site:
+//   sync_page_title(current_store, "Les Magasins");
+// ---------------------------------------------------------------------------
+
+pub fn sync_page_title<T: HasName + Clone + Send + Sync + 'static>(
+    resource: RwSignal<Option<T>>,
+    default: &'static str,
+) {
+    if let Some(title) = use_context::<RwSignal<String>>() {
+        Effect::new(move |_| {
+            if let Some(item) = resource.get() {
+                title.set(item.get_name().to_string());
+            }
+        });
+        on_cleanup(move || title.set(default.into()));
+    }
 }
 
 // ---------------------------------------------------------------------------

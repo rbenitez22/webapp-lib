@@ -138,6 +138,14 @@ impl<'a, T: Serialize> ApiRequest<'a, T> {
 
 async fn handle_response_error(resp: &Response) -> ApiError {
     let status = resp.status();
+    if status == 401 {
+        if let Some(storage) = web_sys::window()
+            .and_then(|w| w.local_storage().ok())
+            .flatten()
+        {
+            let _ = storage.remove_item(crate::auth::STORAGE_AUTH_KEY);
+        }
+    }
     let msg = try_extract_error_message(resp)
         .await
         .unwrap_or_else(|| get_http_error(status));
