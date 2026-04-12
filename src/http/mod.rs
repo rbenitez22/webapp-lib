@@ -251,6 +251,34 @@ pub async fn send_delete(token: &str, path: &str) -> Result<(), ApiError> {
     Ok(())
 }
 
+/// Send a POST request with a JSON body and expect no response body (e.g. 204 No Content).
+pub async fn send_post_no_body<T: Serialize>(token: &str, path: &str, payload: &T) -> Result<(), ApiError> {
+    let body = serde_json::to_string(payload)
+        .map_err(|e| ApiError::new(format!("Serialization error: {}", e), 0))?;
+
+    let opts = RequestInit::new();
+    opts.set_method(HttpMethod::POST.name().as_str());
+    opts.set_mode(RequestMode::Cors);
+    opts.set_body(&JsValue::from_str(&body));
+
+    let url = format!("{}/{}", base_url(), path);
+    let request = Request::new_with_str_and_init(&url, &opts).map_err(js_to_api_error)?;
+    request.headers().set("Content-Type", "application/json").map_err(js_to_api_error)?;
+    request.headers().set("Authorization", &format!("Bearer {}", token)).map_err(js_to_api_error)?;
+
+    let window = web_sys::window().ok_or_else(|| ApiError::new("No window".to_string(), 0))?;
+    let resp_value = JsFuture::from(window.fetch_with_request(&request))
+        .await
+        .map_err(js_to_api_error)?;
+    let resp: Response = resp_value.dyn_into().map_err(|_| ApiError::new("Invalid response".to_string(), 0))?;
+
+    if !resp.ok() {
+        return Err(handle_response_error(&resp).await);
+    }
+
+    Ok(())
+}
+
 async fn read_response_body<R: DeserializeOwned>(resp: Response) -> Result<R, ApiError> {
     let text_val = JsFuture::from(resp.text().map_err(js_to_api_error)?)
         .await

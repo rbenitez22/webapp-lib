@@ -141,11 +141,9 @@ pub fn DeleteRowButton(on_delete: impl Fn(leptos::ev::SubmitEvent) + 'static) ->
                     submit_form(ev);
                 }
             >
-                {move || if deleting.get() {
-                    view! { <div class="delete-spinner" /> }.into_any()
-                } else {
-                    view! { <></> }.into_any()
-                }}
+                <Show when=move || deleting.get()>
+                    <div class="delete-spinner" />
+                </Show>
             </div>
         </form>
     }
@@ -706,6 +704,7 @@ pub fn SelectMenu(
     on_change: impl Fn(String) + Send + Sync + Clone + 'static,
     #[prop(default = true)] required: bool,
     #[prop(default = false)] force_refresh: bool,
+    #[prop(optional)] style: Option<&'static str>,
 ) -> impl IntoView {
     let auth = use_context::<Signal<Option<String>>>().unwrap_or(Signal::derive(|| None));
     let options = RwSignal::new(Vec::<LookupData>::new());
@@ -724,6 +723,7 @@ pub fn SelectMenu(
                     prop:value=current_value.clone()
                     on:change=move |ev| { on_change_clone(event_target_value(&ev)); }
                     required=required
+                    style=style
                 >
                     <option value="" disabled=required selected=required hidden=required>
                         "Select a Value"

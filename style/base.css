@@ -308,24 +308,17 @@ body.toolbar-hidden .top-toolbar {
 /* ── Delete button ── */
 
 .delete-button {
-    color: var(--primary);
-    position: absolute;
-    right: 0;
-    top: 0;
     cursor: pointer;
-    font-weight: bolder;
-    font-size: 1.5rem;
-    padding: 0 0 3px 3px;
-    margin: 0 0 3px 3px;
-}
-
-.delete-button:hover {
-    font-weight: bolder;
-    font-size: 1.8rem;
+    color: var(--primary);
 }
 
 .delete-button:before {
-    content: '\00D7';
+    content: '\2716';   /* ✖ — matches .multiply in icons.css */
+    padding: 4px;
+}
+
+.delete-button:hover {
+    color: var(--accent);
 }
 
 .delete-button--deleting {
@@ -336,11 +329,12 @@ body.toolbar-hidden .top-toolbar {
 
 .delete-button--deleting:before {
     content: '';
+    padding: 0;
 }
 
 .delete-spinner {
-    width: 14px;
-    height: 14px;
+    width: 1em;
+    height: 1em;
     border: 2px solid var(--secondary);
     border-top-color: transparent;
     border-radius: 50%;
@@ -640,9 +634,6 @@ input {
         padding: 8px 0;
     }
 
-    .delete-button {
-        font-size: 1.8em;
-    }
 
     .value-label {
         font-size: 0.85rem;
