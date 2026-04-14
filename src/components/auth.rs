@@ -451,7 +451,7 @@ pub fn Invitations() -> impl IntoView {
         ListComponentModel::new(paths().invitations, use_auth_token());
     let edit_form_model = RwSignal::new(InvitationRequest::new());
 
-    let on_save = move || {
+    let on_save = move |_: &InvitationRequest| {
         edit_form_model.set(InvitationRequest::new());
         close_dialog(dialog_ref);
     };

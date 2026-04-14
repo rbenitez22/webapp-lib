@@ -142,7 +142,7 @@ pub fn load_list_component_model<D>(
 pub fn create_persist_event<D, T>(
     model: ListComponentModel<D>,
     form_model: RwSignal<T>,
-    on_save_success: impl FnOnce() + Clone + 'static,
+    on_save_success: impl Fn(&D) + Clone + 'static,
 ) -> impl Fn(leptos::ev::SubmitEvent)
 where
     T: HasId + Send + Sync + Serialize + Clone + 'static,
@@ -173,13 +173,13 @@ where
                         model_clone.saving.set(false);
                         model_clone.data.update(|rows| {
                             if let Some(idx) = rows.iter().position(|r| r.get_id() == form_id) {
-                                rows[idx] = persisted;
+                                rows[idx] = persisted.clone();
                             } else {
-                                rows.push(persisted);
+                                rows.push(persisted.clone());
                                 rows.sort_by(|a, b| a.get_name().cmp(&b.get_name()));
                             }
                         });
-                        on_success();
+                        on_success(&persisted);
                     }
                     Err(e) => {
                         model_clone.saving.set(false);
@@ -293,18 +293,48 @@ pub fn update_resource_as<B, R>(
     B: Serialize + Send + Sync + 'static,
     R: DeserializeOwned + Send + Sync + 'static,
 {
+    send_resource(HttpMethod::PUT, path, body, auth, on_success, on_fail);
+}
+
+/// Send a request with an arbitrary HTTP method, deserialise the response as `R`.
+/// `update_resource_as` and `post_resource` are thin wrappers over this.
+pub fn send_resource<B, R>(
+    method: HttpMethod,
+    path: crate::http::ResourcePath,
+    body: B,
+    auth: Signal<Option<String>>,
+    on_success: impl Fn(R) + 'static,
+    on_fail: impl Fn(String) + 'static,
+) where
+    B: Serialize + Send + Sync + 'static,
+    R: DeserializeOwned + Send + Sync + 'static,
+{
     let path_str = path.to_string();
     let Some(token) = auth.get_untracked() else {
         on_fail("Not authenticated".to_string());
         return;
     };
     spawn_local(async move {
-        let req = ApiRequest::new(&HttpMethod::PUT, Some(token.as_str()), &path_str, &body);
+        let req = ApiRequest::new(&method, Some(token.as_str()), &path_str, &body);
         match send_request::<B, R>(req).await {
             Ok(saved) => on_success(saved),
             Err(e)    => on_fail(e.to_string()),
         }
     });
+}
+
+/// POST a body to a resource path and deserialise the response as `R`.
+pub fn post_resource<B, R>(
+    path: crate::http::ResourcePath,
+    body: B,
+    auth: Signal<Option<String>>,
+    on_success: impl Fn(R) + 'static,
+    on_fail: impl Fn(String) + 'static,
+) where
+    B: Serialize + Send + Sync + 'static,
+    R: DeserializeOwned + Send + Sync + 'static,
+{
+    send_resource(HttpMethod::POST, path, body, auth, on_success, on_fail);
 }
 
 // ---------------------------------------------------------------------------

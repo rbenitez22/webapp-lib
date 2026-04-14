@@ -309,6 +309,7 @@ body.toolbar-hidden .top-toolbar {
 
 .delete-button {
     cursor: pointer;
+    float: right;
     color: var(--primary);
 }
 

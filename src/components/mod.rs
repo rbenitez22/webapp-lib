@@ -63,6 +63,9 @@ impl MessageModel {
     pub fn info(message: String) -> Self {
         Self { message, message_type: MessageType::Info }
     }
+    pub fn warn(message: String) -> Self {
+        Self { message, message_type: MessageType::Warning }
+    }
     pub fn error(message: String) -> Self {
         Self { message, message_type: MessageType::Error }
     }
@@ -171,14 +174,16 @@ pub fn DialogTitle(#[prop(into)] title: Signal<String>, on_close: impl Fn(MouseE
 pub fn ComponentTitleBar(
     title: String,
     on_add: impl Fn(MouseEvent) + 'static,
-    #[prop(default = true)] show_add: bool,
+    #[prop(default = Signal::from(true), into)] show_add: Signal<bool>,
     #[prop(optional)] children: Option<Children>,
 ) -> impl IntoView {
     view! {
         <div class="title-bar">
-            {show_add.then(|| view! {
-                <div class="button left-button plus-sign" on:click=on_add />
-            })}
+            <div
+                class="button left-button plus-sign"
+                style:display=move || if show_add.get() { "" } else { "none" }
+                on:click=on_add
+            />
             {children.map(|c| c())}
             <span>{title}</span>
         </div>
