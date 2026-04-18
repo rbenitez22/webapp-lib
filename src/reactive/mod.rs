@@ -33,7 +33,7 @@ pub struct ListComponentModel<D> {
     pub saving: RwSignal<bool>,
     pub error: RwSignal<Option<String>>,
     pub data: RwSignal<Vec<D>>,
-    pub form_action: String,
+    pub form_action: RwSignal<String>,
 }
 
 impl<D: Send + Sync + 'static> ListComponentModel<D> {
@@ -44,7 +44,7 @@ impl<D: Send + Sync + 'static> ListComponentModel<D> {
             saving: RwSignal::new(false),
             error: RwSignal::new(None),
             data: RwSignal::new(Vec::new()),
-            form_action: form_action.into(),
+            form_action: RwSignal::new(form_action.into()),
         }
     }
 
@@ -104,7 +104,7 @@ pub fn load_list_component_model<D>(
         let nav_clone = nav.clone();
         if let Some(token) = model.auth.get() {
             model.loading.set(true);
-            let path = model.form_action.clone();
+            let path = model.form_action.get_untracked();
             spawn_local(async move {
                 match send_get::<Vec<D>>(&token, &path).await {
                     Ok(mut records) => {
@@ -155,9 +155,9 @@ where
         let is_new = form_data.get_id().is_empty();
         let method = if is_new { HttpMethod::POST } else { HttpMethod::PUT };
         let path = if is_new {
-            model.form_action.clone()
+            model.form_action.get_untracked()
         } else {
-            format!("{}/{}", model.form_action, form_data.get_id())
+            format!("{}/{}", model.form_action.get_untracked(), form_data.get_id())
         };
 
         if let Some(token) = model.auth.get() {
@@ -208,7 +208,7 @@ where
         ev.prevent_default();
 
         let token = list_model.auth.get().unwrap_or_default();
-        let path = format!("{}/{}", list_model.form_action, id);
+        let path = format!("{}/{}", list_model.form_action.get_untracked(), id);
         let id = id.clone();
         let model_clone = list_model.clone();
 
