@@ -51,7 +51,7 @@ impl Default for AuthPaths {
     fn default() -> Self {
         Self {
             login:                "login",
-            refresh:              "auth/refresh",
+            refresh:              "refresh",
             accounts:             "accounts",
             update_name:          "accounts/update_name",
             change_password:      "accounts/change_passwd",

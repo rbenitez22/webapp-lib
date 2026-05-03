@@ -28,6 +28,7 @@ pub enum HttpMethod {
     GET,
     POST,
     PUT,
+    PATCH,
     DELETE,
 }
 
@@ -68,33 +69,51 @@ impl std::fmt::Display for ApiError {
 // ---------------------------------------------------------------------------
 
 #[derive(Clone)]
-pub struct ResourcePath(Vec<String>);
+pub struct ResourcePath {
+    segments: Vec<String>,
+    query:    Vec<(String, String)>,
+}
 
 impl ResourcePath {
     pub fn new(base: impl Into<String>) -> Self {
-        ResourcePath(vec![base.into()])
+        ResourcePath { segments: vec![base.into()], query: vec![] }
     }
 
     /// Append an id segment:  /users → /users/123
     pub fn id(mut self, id: impl ToString) -> Self {
-        self.0.push(id.to_string());
+        self.segments.push(id.to_string());
         self
     }
 
     /// Append a sub-resource name:  /users/123 → /users/123/permissions
     pub fn child(mut self, resource: impl Into<String>) -> Self {
-        self.0.push(resource.into());
+        self.segments.push(resource.into());
+        self
+    }
+
+    /// Append a query parameter:  /memories → /memories?entity_id=abc
+    pub fn query(mut self, key: impl Into<String>, value: impl ToString) -> Self {
+        self.query.push((key.into(), value.to_string()));
         self
     }
 
     pub fn build(&self) -> String {
-        self.0.join("/")
+        let path = self.segments.join("/");
+        if self.query.is_empty() {
+            path
+        } else {
+            let qs = self.query.iter()
+                .map(|(k, v)| format!("{}={}", k, v))
+                .collect::<Vec<_>>()
+                .join("&");
+            format!("{}?{}", path, qs)
+        }
     }
 }
 
 impl std::fmt::Display for ResourcePath {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.0.join("/"))
+        write!(f, "{}", self.build())
     }
 }
 

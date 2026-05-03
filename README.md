@@ -1,6 +1,6 @@
 # webapp-lib
 
-A reusable Leptos 0.8 CSR/WASM component library for Rust web applications. Provides HTTP utilities, browser storage helpers, reactive list/resource patterns, CSS theming, and a set of generic UI components.
+A reusable Leptos 0.8 CSR/WASM component library for Rust web applications. Provides HTTP utilities, browser storage helpers, reactive list/resource patterns, CSS theming, authentication primitives, and a set of generic UI components.
 
 ## Documentation
 
@@ -14,23 +14,49 @@ A reusable Leptos 0.8 CSR/WASM component library for Rust web applications. Prov
 
 Features are additive. Each feature enables the ones it depends on.
 
-| Feature      | Enables             | Description                                                      |
-|--------------|---------------------|------------------------------------------------------------------|
-| `http`       | —                   | HTTP client, `ResourcePath`, `ApiError`                          |
-| `storage`    | —                   | `localStorage` / `sessionStorage` helpers                        |
-| `reactive`   | `http`, `storage`   | `HasId`, `HasName`, `ListComponentModel`, data-loading functions |
-| `theme`      | —                   | CSS injection at runtime                                         |
-| `components` | `reactive`, `theme` | All Leptos UI components                                         |
+| Feature      | Enables                  | Description                                                      |
+|--------------|--------------------------|------------------------------------------------------------------|
+| `http`       | —                        | HTTP client, `ResourcePath`, `ApiError`                          |
+| `storage`    | —                        | `localStorage` / `sessionStorage` helpers                        |
+| `reactive`   | `http`, `storage`        | `HasId`, `HasName`, `ListComponentModel`, data-loading functions |
+| `theme`      | —                        | CSS injection at runtime                                         |
+| `components` | `reactive`, `theme`      | All generic Leptos UI components                                 |
+| `auth`       | `components`, `leptos-use` | Authentication models, JWT helpers, auth UI components         |
 
 ```toml
 # Cargo.toml
 
-# From GitHub (recommended for normal use):
-webapp-lib = { git = "ssh://git@github.com/rbenitez22/webapp-lib.git", features = ["components"] }
+# From GitHub — always pin to a tag (highly encouraged).
+# Without a tag, Cargo resolves to the latest commit on the default branch,
+# which can silently break builds after upstream changes.
+webapp-lib = { git = "ssh://git@github.com/rbenitez22/webapp-lib.git", tag = "v0.3.1", features = ["components"] }
+
+# With authentication support:
+webapp-lib = { git = "ssh://git@github.com/rbenitez22/webapp-lib.git", tag = "v0.3.1", features = ["auth"] }
 
 # Local path (for active co-development on the library itself):
 # webapp-lib = { path = "…/webapp-lib", features = ["components"] }
 ```
+
+> **Version alignment** — if your project depends on another crate that also
+> depends on `webapp-lib` (e.g. a shared domain crate), **all** crates in the
+> workspace must reference the **same** `tag` (or `rev`). Cargo treats each
+> unique git URL + tag/rev combination as a distinct package; mismatched
+> versions will cause duplicate-type errors at compile time that are hard to
+> diagnose. The simplest solution is to define the dependency once in the
+> workspace root `Cargo.toml` and inherit it everywhere:
+>
+> ```toml
+> # Workspace Cargo.toml
+> [workspace.dependencies]
+> webapp-lib = { git = "ssh://git@github.com/rbenitez22/webapp-lib.git", tag = "v0.3.1", features = ["auth"] }
+>
+> # Per-crate Cargo.toml
+> [dependencies]
+> webapp-lib = { workspace = true }
+> # Add extra features only needed by this crate:
+> # webapp-lib = { workspace = true, features = ["components"] }
+> ```
 
 ---
 
@@ -42,6 +68,22 @@ Call these once in `main()` before `mount_to_body`:
 fn main() {
     webapp_lib::http::set_base_url("https://api.example.com");
     webapp_lib::theme::init();          // or init_with(&custom_vars)
+    mount_to_body(App);
+}
+```
+
+With the `auth` feature, also optionally configure auth paths and start the token refresh timer:
+
+```rust
+fn main() {
+    webapp_lib::http::set_base_url("https://api.example.com");
+    webapp_lib::theme::init();
+    // Override only what differs from defaults:
+    webapp_lib::auth::init(webapp_lib::auth::AuthPaths {
+        after_login: "/dashboard",
+        ..Default::default()
+    });
+    webapp_lib::auth::start_token_refresh_timer(); // optional: refreshes JWT every 50 min
     mount_to_body(App);
 }
 ```
@@ -416,7 +458,250 @@ Override any variable in your own stylesheet:
 
 ---
 
+## `auth` — Authentication (feature: `auth`)
+
+Requires the `auth` feature. Depends on `components` and `leptos-use`.
+
+### `AuthPaths`
+
+All API paths and redirect targets are configurable via `AuthPaths`. Call
+`auth::init` once before mounting; if omitted, defaults below are used.
+
+```rust
+pub struct AuthPaths {
+    pub login:                &'static str,  // default: "login"
+    pub refresh:              &'static str,  // default: "refresh"
+    pub accounts:             &'static str,  // default: "accounts"
+    pub update_name:          &'static str,  // default: "accounts/update_name"
+    pub change_password:      &'static str,  // default: "accounts/change_passwd"
+    pub invitations:          &'static str,  // default: "accounts/invitations"
+    pub login_page:           &'static str,  // default: "/login"
+    pub after_login:          &'static str,  // default: "/lists"
+    pub after_register:       &'static str,  // default: "/"
+    pub min_password_entropy: f64,           // default: 80.0
+}
+```
+
+```rust
+webapp_lib::auth::init(webapp_lib::auth::AuthPaths {
+    after_login: "/dashboard",
+    min_password_entropy: 60.0,
+    ..Default::default()
+});
+```
+
+### Storage constants
+
+```rust
+pub const STORAGE_AUTH_KEY:  &str = "auth";         // key for Auth in localStorage
+pub const STORAGE_USER_KEY:  &str = "user_account"; // key for UserAccount in localStorage
+```
+
+### Auth models
+
+```rust
+// Stored in localStorage under STORAGE_AUTH_KEY
+pub struct Auth {
+    pub token: Option<String>,
+}
+impl Auth {
+    pub fn from(token: String) -> Self { … }
+    pub fn is_authenticated(&self) -> bool { … }
+}
+
+// Stored in localStorage under STORAGE_USER_KEY
+pub struct UserAccount {
+    pub id:           String,
+    pub display_name: String,
+    pub email:        String,
+    pub auth_type:    Option<String>,
+    pub admin:        bool,
+}
+
+// Form model for account creation; id field is `email`
+pub struct UserAccountRequest {
+    pub display_name: String,
+    pub email:        String,
+    pub password:     String,
+}
+impl UserAccountRequest {
+    pub fn from_account(account: &UserAccount) -> Self { … }
+}
+
+pub struct LoginRequest  { pub email: String, pub password: String }
+pub struct LoginResponse { pub token: String, pub user_account: UserAccount }
+pub struct RefreshResponse { pub token: String }
+pub struct UpdateNameRequest     { pub display_name: String }
+pub struct ChangePasswordRequest { pub current_password: String, pub new_password: String }
+
+pub struct InvitationRequest {
+    pub id:           String,
+    pub email:        String,
+    pub display_name: String,
+    pub is_admin:     bool,
+}
+impl InvitationRequest {
+    pub fn new() -> Self { … }
+}
+```
+
+### Reactive helpers
+
+```rust
+use webapp_lib::auth::{use_auth_token, use_user_account, use_auth_signal};
+
+// Must be called inside a reactive context (component or effect)
+let token:   Signal<Option<String>> = use_auth_token();    // None = logged out
+let account: Signal<UserAccount>    = use_user_account();
+let is_auth: Signal<bool>           = use_auth_signal();
+
+// Non-reactive direct read from localStorage
+let token: Option<String> = webapp_lib::auth::read_auth_token_from_local_storage();
+```
+
+### Token refresh timer
+
+Starts a background `setInterval` that silently refreshes the JWT every 50 minutes.
+The new token is written to localStorage without dispatching a storage event so no
+re-renders are triggered.
+
+```rust
+// Call once in main() after set_base_url
+webapp_lib::auth::start_token_refresh_timer();
+
+// Or call the async function directly if you need the token:
+let new_token: Result<String, ApiError> = refresh_auth_token(&current_token).await;
+```
+
+### Login helpers
+
+```rust
+// Low-level async login — returns the full response or an ApiError
+let resp: Result<LoginResponse, ApiError> = submit_login(&email, &password).await;
+
+// Higher-level — returns a form submit handler wired to navigate + storage
+let on_submit = submit_login_request(
+    email_signal,
+    password_signal,
+    use_navigate(),
+    set_auth,        // WriteSignal<Auth>
+    set_login_msg,   // WriteSignal<String>
+    set_loading,     // WriteSignal<bool>
+);
+```
+
+### Auth components (feature: `auth`)
+
+#### `Login`
+
+A self-contained login page. Navigates to `AuthPaths::after_login` on success.
+
+```rust
+view! { <Login /> }
+```
+
+#### `Logout`
+
+Clears auth/user from localStorage and navigates to `AuthPaths::login_page`.
+
+```rust
+view! { <Logout /> }
+// Optional callback before clearing:
+view! { <Logout on_logout=Callback::new(|_| do_cleanup()) /> }
+```
+
+Props: `on_logout: Option<Callback<()>>`.
+
+#### `NewAccount`
+
+Registration page. Navigates to `AuthPaths::after_register` on success.
+
+```rust
+view! { <NewAccount /> }
+```
+
+#### `AccountEditor`
+
+Reusable account-creation form (used inside `NewAccount`, but embeddable elsewhere).
+
+```rust
+view! {
+    <AccountEditor
+        form_model=form_model   // RwSignal<UserAccountRequest>
+        on_saved=move || { /* called after successful POST */ }
+    />
+}
+```
+
+#### `Account`
+
+Account management page. Displays display name (editable), email, admin flag, and a
+Change Password dialog. Wraps itself in `<BaseComponent>` — redirects to login if
+unauthenticated.
+
+```rust
+view! { <Account /> }
+```
+
+#### `Invitations`
+
+Admin invitation list page. The `+` add button is hidden for non-admin users.
+Wraps itself in `<BaseComponent>`.
+
+```rust
+view! { <Invitations /> }
+```
+
+#### `InvitationView`
+
+A single invitation row with an optional delete button.
+
+```rust
+view! {
+    <InvitationView
+        model=invitation.clone()
+        list_model=model.clone()
+        is_admin=is_admin
+        on_click=move || { form.set(invitation.clone()); open_dialog(dialog_ref); }
+    />
+}
+```
+
+#### `InvitationEditForm`
+
+Create/edit form for an `InvitationRequest`. The email field is disabled when
+`is_new` is `false`.
+
+```rust
+view! {
+    <InvitationEditForm
+        is_new=is_new              // RwSignal<bool>
+        form_model=edit_form_model // RwSignal<InvitationRequest>
+        saving=model.saving
+        on_submit=on_submit
+    />
+}
+```
+
+---
+
 ## `components` — UI Components
+
+### `MessageModel` / `MessageType`
+
+```rust
+use webapp_lib::components::{MessageModel, MessageType};
+
+// Constructors:
+MessageModel::empty()                          // blank (no message rendered)
+MessageModel::info("Saved successfully".to_string())
+MessageModel::warn("Check your input".to_string())
+MessageModel::error("Something went wrong".to_string())
+
+// MessageType variants: Info, Warning, Error
+// MessageType::get_style_class() → "info" | "warning" | "error"
+// MessageType::get_icon_class()  → icon CSS class string
+```
 
 ### Dialog helpers
 
@@ -424,6 +709,19 @@ Override any variable in your own stylesheet:
 open_dialog(dialog_ref);   // calls showModal()
 close_dialog(dialog_ref);  // calls close()
 submit_form(mouse_event);  // finds nearest <form> and calls requestSubmit()
+```
+
+### `render_options`
+
+Creates a `<datalist>`-style `<option>` list from a signal. Shows "Loading…" while
+`loading` is `true`.
+
+```rust
+use webapp_lib::components::render_options;
+
+// D must implement HasName
+let opts = render_options(options_signal, loading_signal);
+view! { <datalist id="my-list">{opts}</datalist> }
 ```
 
 ### `BaseComponent` — auth guard
@@ -438,11 +736,27 @@ view! {
 
 Props: `is_authenticated: Signal<bool>`, `login_path: &'static str` (default `"/login"`).
 
+### `Spinner`
+
+Full-overlay loading spinner.
+
+```rust
+view! { <Spinner /> }
+// Custom message:
+view! { <Spinner message="Saving…".to_string() /> }
+```
+
+Props: `message: String` (default `"Loading…"`).
+
 ### `SideMenu` + `MenuLink`
 
 ```rust
 view! {
-    <SideMenu title="My App".to_string() user_name=user_name_signal>
+    <SideMenu
+        title="My App".to_string()
+        user_name=user_name_signal
+        is_authenticated=use_auth_signal()   // optional: hides badge when logged out
+    >
         <MenuLink href="/home">"Home"</MenuLink>
         <MenuLink href="/settings">"Settings"</MenuLink>
         <MenuLink href="/logout">"Logout"</MenuLink>
@@ -450,7 +764,13 @@ view! {
 }
 ```
 
-`SideMenu` props: `title: Option<String>`, `user_name: Option<Signal<String>>`, `children`.
+| Prop               | Type                     | Required | Description                                              |
+|--------------------|--------------------------|----------|----------------------------------------------------------|
+| `title`            | `MaybeSignal<String>`    | No       | App title shown in the toolbar                           |
+| `user_name`        | `Option<Signal<String>>` | No       | Display name badge in toolbar and drawer footer          |
+| `is_authenticated` | `Option<Signal<bool>>`   | No       | When provided, hides the user badge while logged out     |
+| `children`         | `Children`               | Yes      | `<MenuLink>` elements                                    |
+
 `MenuLink` auto-closes the drawer on click. Must be a descendant of `SideMenu`.
 
 ### `ListComponentView`
@@ -475,8 +795,10 @@ view! {
     <ComponentTitleBar
         title="Shopping Lists".to_string()
         on_add=move |_| open_dialog(dialog_ref)
-        // show_add=false  (hide the + button)
-    />
+        // show_add=false  (hide the + button; accepts Signal<bool>)
+    >
+        // optional children rendered between the + button and the title
+    </ComponentTitleBar>
 }
 ```
 
@@ -491,13 +813,15 @@ view! {
 }
 ```
 
+`title` accepts anything `Into<Signal<String>>`, so both `String` and `RwSignal<String>` work.
+
 ### `DataGrid`
 
 ```rust
 view! {
     <DataGrid
         data=move || items.get()
-        cell=move |item: MyType| view! { <div>{item.name}</div> }
+        cell=move |item: &MyType| view! { <div>{item.name.clone()}</div> }
     />
 }
 ```
@@ -510,6 +834,8 @@ view! {
         id="can_edit"
         value=move || form.get().can_edit
         on_change=move |v| form.update(|m| m.can_edit = v)
+        // style="display: inline;"  (optional)
+        // class="my-class"          (optional)
     />
 }
 ```
@@ -531,6 +857,9 @@ let on_delete = create_delete_event(item.get_id(), model.clone());
 view! { <DeleteRowButton on_delete=on_delete /> }
 ```
 
+Renders a `✖` button. Shows an inline spinner and becomes non-interactive while
+the delete request is in flight.
+
 ### `DeleteConfirmDialog`
 
 ```rust
@@ -539,6 +868,25 @@ view! {
         dialog_ref=dialog_ref
         message="Delete this item?".to_string()
         on_confirm=move || { /* perform delete */ }
+    />
+}
+```
+
+### `ConfirmDialog`
+
+Generic two-button confirm dialog. Unlike `DeleteConfirmDialog`, it does not
+render its own `<dialog>` — pass a `NodeRef` you control.
+
+```rust
+let dialog_ref: NodeRef<Dialog> = NodeRef::new();
+let visible = RwSignal::new(false);
+
+view! {
+    <ConfirmDialog
+        dialog_ref=dialog_ref
+        is_visible=visible
+        on_confirm=move || { /* confirmed */ }
+        on_cancel=move || {}
     />
 }
 ```
@@ -554,7 +902,9 @@ view! {
         field_name="category_id"
         value=move || form.get().category_id.clone()
         on_change=move |val| form.update(|m| m.category_id = val)
-        // force_refresh=true  — bypass cache
+        // required=true        (default true — adds a disabled placeholder option)
+        // force_refresh=true   — bypass localStorage cache
+        // style="width: 200px" — optional inline style for the <select>
     />
 }
 ```
@@ -599,52 +949,118 @@ view! {
 
 ### `VerifiedPassword` + `EntropyIndicator`
 
+#### `VerifiedPassword`
+
+Renders password + confirm-password fields with a show/hide toggle, an entropy
+strength indicator, and a match status display. Sets `is_valid` to `true` only
+when entropy ≥ `min_entropy` **and** both fields match.
+
 ```rust
-let password   = RwSignal::new(String::new());
-let pw_valid   = RwSignal::new(false);
+let password = RwSignal::new(String::new());
+let pw_valid = RwSignal::new(false);
 
 view! {
     <VerifiedPassword password=password is_valid=pw_valid min_entropy=50.0 />
-    // Renders password + confirm fields with strength indicator and match status
 }
 ```
 
----
+| Prop          | Type             | Description                                         |
+|---------------|------------------|-----------------------------------------------------|
+| `password`    | `RwSignal<String>` | Controlled signal for the password value          |
+| `is_valid`    | `RwSignal<bool>` | Set to `true` when entropy + match both pass        |
+| `min_entropy` | `f64`            | Minimum entropy in bits required for "Strong"       |
 
-## Typical Page Pattern
+#### `EntropyIndicator`
+
+Standalone entropy strength display. Useful when you only need the indicator
+without the matched-confirm field.
 
 ```rust
-#[component]
-pub fn MyListPage() -> impl IntoView {
-    let dialog_ref = NodeRef::new();
-    let model = ListComponentModel::new("items", use_auth_token());
-    let form  = RwSignal::new(ItemRequest::default());
-
-    load_list_component_model(model.clone(), use_navigate(), None, "/login");
-
-    let on_submit = create_persist_event(model.clone(), form, move || close_dialog(dialog_ref));
-
-    view! {
-        <BaseComponent is_authenticated=use_auth_signal()>
-            <div class="main">
-                <ComponentTitleBar title="Items".to_string()
-                    on_add=move |_| { form.set(ItemRequest::default()); open_dialog(dialog_ref); }
-                />
-                <dialog node_ref=dialog_ref class="dialog">
-                    <DialogTitle title="Edit Item".to_string() on_close=move |_| close_dialog(dialog_ref)/>
-                    <MyEditForm form=form saving=model.saving on_submit=on_submit/>
-                </dialog>
-                <ListComponentView
-                    loading=model.loading
-                    error=model.error
-                    data=model.data
-                    cell_view=move |item: &Item| {
-                        let on_delete = create_delete_event(item.get_id(), model.clone());
-                        view! { <DeleteRowButton on_delete=on_delete/> }
-                    }
-                />
-            </div>
-        </BaseComponent>
-    }
+let is_strong = RwSignal::new(false);
+view! {
+    <EntropyIndicator
+        password=move || password_signal.get()
+        min_entropy=60.0
+        is_valid=is_strong
+    />
 }
 ```
+
+Strength labels and bit thresholds:
+
+| Label       | Entropy (bits) |
+|-------------|----------------|
+| Very Weak   | < 25           |
+| Weak        | 25 – 39        |
+| Fair        | 40 – (min - 1) |
+| Strong      | ≥ min_entropy  |
+
+#### `calc_password_entropy`
+
+Low-level helper used internally by `EntropyIndicator` and `VerifiedPassword`.
+Returns entropy in bits based on password length × log₂(charset size).
+
+```rust
+use webapp_lib::components::calc_password_entropy;
+
+let bits: f64 = calc_password_entropy("MyP@ssw0rd!");
+```
+
+### `AutocompleteInput` / `AutocompleteInputModel`
+
+A text input with a live-filter dropdown backed by a remote API list. Supports
+keyboard navigation (↑ ↓ Enter Escape) and a manual refresh button.
+
+#### `AutocompleteInputModel<T>`
+
+Owns the reactive loading state and fetches options from the API. Must be
+created in a reactive context (e.g., inside a component).
+
+```rust
+use webapp_lib::components::AutocompleteInputModel;
+use webapp_lib::http::ResourcePath;
+
+// T must be: DeserializeOwned + Clone + Send + Sync + 'static
+let model = AutocompleteInputModel::<MyItem>::new(
+    ResourcePath::new("items"),
+    auth_token_signal, // Signal<Option<String>>
+);
+
+// Signals exposed:
+model.options  // RwSignal<Vec<T>>
+model.error    // RwSignal<Option<String>>
+model.loading  // RwSignal<bool>
+
+// Force a re-fetch:
+model.refresh();
+```
+
+#### `AutocompleteInput<T>`
+
+```rust
+use webapp_lib::components::AutocompleteInput;
+
+let input_text = RwSignal::new(String::new());
+let selected   = RwSignal::new(Option::<MyItem>::None);
+
+view! {
+    <AutocompleteInput
+        model=model
+        item_key=|item: &MyItem| item.id.clone()   // unique key per item
+        label=|item: &MyItem| item.name.clone()    // display text + filter text
+        input_value=input_text.into()
+        on_input=move |text| input_text.set(text)
+        on_select=move |opt| selected.set(opt)     // None on blur with no match
+    />
+}
+```
+
+| Prop          | Type                               | Description                                                   |
+|---------------|------------------------------------|---------------------------------------------------------------|
+| `model`       | `AutocompleteInputModel<T>`        | Owns fetched options, loading/error state                     |
+| `item_key`    | `Fn(&T) -> String`                 | Unique key per item (used for keyboard highlighting)          |
+| `label`       | `Fn(&T) -> String`                 | Display text and substring filter text                        |
+| `input_value` | `Signal<String>`                   | Controlled text-input value                                   |
+| `on_input`    | `Fn(String)`                       | Called on every keystroke with the new text                   |
+| `on_select`   | `Fn(Option<T>)`                    | `Some(item)` on selection; `None` on blur with no exact match |
+

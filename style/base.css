@@ -353,6 +353,7 @@ body.toolbar-hidden .top-toolbar {
     max-width: 32vw;
     box-sizing: border-box;
     width: 35vw;
+    overflow: visible;
 }
 
 .close-dialog {
